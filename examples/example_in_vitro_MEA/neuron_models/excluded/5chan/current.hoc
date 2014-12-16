@@ -1,0 +1,43 @@
+/* Currents of each of the 5 channels under voltage clamp
+   Fig.1 in Fohlmeister & Miller J. Neurophysiol. 78:1935-1947,1997.
+*/
+load_proc("nrnmainmenu")
+
+create soma
+
+access soma
+L=25
+diam=25
+nseg=1
+
+insert pas
+e_pas=-65
+g_pas=.00005
+Ra=110
+
+insert spike
+//gnabar_spike = 0.05 // table 1 but for fig 1 used default value of 0.04
+gkbar_spike = 0.012
+gabar_spike = 0.036
+gcabar_spike = 0.0022
+gkcbar_spike = 0.00005
+
+celsius = 22
+ena=35
+ek=-75
+
+insert cad
+//depth_cad = diam / 2
+// to get the fig 1 behavior of slowly increasing calcium concentration
+// with constant calcium current over 10 ms. We use...
+depth_cad = 3 // (micron)
+taur_cad = 10 // (ms)
+
+objectvar VoltageClamp
+VoltageClamp=new SEClamp(0.5)
+VoltageClamp.dur1=10
+VoltageClamp.rs=.01
+
+xopen("current.ses")
+
+

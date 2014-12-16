@@ -1,0 +1,15 @@
+load_file("nrngui.hoc")
+load_file("current.hoc")
+
+objref glist
+glist = new List("Graph")
+proc toggle() {
+	for i=0, glist.count-1 {glist.object(i).exec_menu("Keep Lines")}
+}
+proc erase() {
+	for i=0, glist.count-1 {glist.object(i).erase()}
+}
+toggle()
+//Family[0].frun() // doesn't work since frun not public so work around this way
+execute("frun()", Family[0])
+

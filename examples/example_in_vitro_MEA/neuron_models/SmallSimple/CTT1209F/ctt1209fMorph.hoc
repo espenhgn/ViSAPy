@@ -1,0 +1,262 @@
+/*----------------------------------------------------------------
+%W%  %G%
+ctt1209f.asc  translated Mon Dec 16 17:00:26 1996 by ntscable 2.0
+source file syntax: Eutectic
+output file syntax: CABLE
+soma: diameter = 9.65705 um  length = 20.4896 um  area = 621.625 um2
+      14 three-D points; 16 outline points numbered 1-16
+      outline diameter = 14.4117 um
+4 primary neurites
+7 branches totaling 287.938 um in length, 416.393 um2 in area
+80 tree points translated to 37 segments (1 requested)
+Neurites divided into segments of equal dx between adjacent digitized
+branch points.
+Segment length constrained to be < 10 um.
+No. points     96
+No. trees       5
+Text  T01209FO, HRP, Silver enhanced, 1/31/89                                                                                 
+
+----------------------------------------------------------------*/
+					/* create sections */
+create    soma[1],\
+          dend1[1],\
+          dend2[7],\
+          dend3[1],\
+          dend4[1]
+
+
+
+/*----------------------------------------------------------------*/
+proc geometry() { local i, j
+
+						/* soma[0] geometry */
+    soma[0] {
+        nseg = 1
+        pt3dclear()
+        for j = 1, fscan() {
+            pt3dadd(fscan(),fscan(),fscan(),fscan())
+        }
+    }
+
+					/* connect primary neurites */
+    soma[0] connect dend1[0] (0), 0.5
+    soma[0] connect dend2[0] (0), 0.5
+    soma[0] connect dend3[0] (0), 0.5
+    soma[0] connect dend4[0] (0), 0.5
+
+
+					/* neurite geometry*/
+    for i = 0,0 {
+        dend1[i] {
+            nseg = fscan()
+            pt3dclear()
+            for j = 1, fscan() {
+                pt3dadd(fscan(),fscan(),fscan(),fscan())
+            }
+        }
+    }
+
+    for i = 0,6 {
+        dend2[i] {
+            nseg = fscan()
+            pt3dclear()
+            for j = 1, fscan() {
+                pt3dadd(fscan(),fscan(),fscan(),fscan())
+            }
+        }
+    }
+
+    for i = 0,0 {
+        dend3[i] {
+            nseg = fscan()
+            pt3dclear()
+            for j = 1, fscan() {
+                pt3dadd(fscan(),fscan(),fscan(),fscan())
+            }
+        }
+    }
+
+    for i = 0,0 {
+        dend4[i] {
+            nseg = fscan()
+            pt3dclear()
+            for j = 1, fscan() {
+                pt3dadd(fscan(),fscan(),fscan(),fscan())
+            }
+        }
+    }
+
+
+
+					/* branching topology*/
+    for i = 1,0 {
+        dend1[fscan()] connect dend1[i] (0), fscan()
+    }
+
+    for i = 1,6 {
+        dend2[fscan()] connect dend2[i] (0), fscan()
+    }
+
+    for i = 1,0 {
+        dend3[fscan()] connect dend3[i] (0), fscan()
+    }
+
+    for i = 1,0 {
+        dend4[fscan()] connect dend4[i] (0), fscan()
+    }
+
+}
+
+geometry()
+
+
+SOMA COORDINATES AND DIAMETERS:
+
+    14
+    -7.5       -2      1.5        0
+    -7.5       -1      1.5        2
+      -7   0.8125   0.0625   7.0997
+    -5.5  0.78571     0.25   9.2585
+    -3.5      0.5        0   12.369
+      -2    -0.05    -0.25   15.108
+      -1     0.15    -0.35   15.868
+     0.5   -0.225     -0.5   15.678
+     3.5    0.075    -0.25   13.386
+       4  0.33333    -0.25   12.584
+       5      0.5    -0.05   10.218
+       5     1.75     -0.8    7.524
+     6.5   1.9375   -0.125   4.1926
+       7      0.5      0.5        0
+
+
+NEURITE COORDINATES AND DIAMETERS:
+
+    8 20
+       3      7.5        1      0.7
+       4        9      2.5      0.7
+       7       10      2.5      0.5
+    10.5     10.5     -2.5      0.5
+    13.5        8       -3      0.1
+    13.5        5     -4.5      0.1
+      12      0.5       -3      0.1
+    11.5     -3.5       -3      0.1
+     9.5     -5.5     -2.5      0.1
+       9     -8.5     -1.5      0.1
+     8.5      -12        0      0.1
+     7.5      -15     -0.5      0.1
+     5.5      -19     -0.5      0.1
+     8.5      -21        0      0.1
+    11.5    -25.5       -1      0.1
+      13      -30       -1      0.1
+     9.5      -30     -1.5      0.1
+       6      -33     -1.5      0.1
+       3      -36     -1.5      0.1
+       2    -36.5     -1.5      0.1
+
+    2 4
+       1     -3.5      2.5      2.5
+     5.5       -5      6.5      2.5
+     8.5     -6.5        8      2.5
+    13.5     -8.5        8      2.5
+
+    3 9
+    13.5     -8.5        8      2.5
+      12    -11.5      8.5      0.8
+      11      -13      8.5      0.8
+      12      -17      9.5      0.8
+      10      -19       10      0.8
+       8    -19.5     10.5      0.2
+       7      -21     10.5      0.2
+     7.5    -23.5     10.5      0.2
+       9      -26       10      0.2
+
+    2 4
+    13.5     -8.5        8      2.5
+    16.5       -9      9.5      0.9
+      20     -9.5       10      0.9
+      22     -9.5     12.5      0.9
+
+    4 11
+      22     -9.5     12.5      0.9
+      23      -12     10.5      0.1
+      23    -15.5       11      0.1
+      25    -17.5     10.5      0.1
+      25      -20     10.5      0.1
+    26.5    -20.5     10.5      0.1
+    27.5      -23     11.5      0.1
+      31      -23     13.5      0.1
+      35      -24     13.5      0.1
+    39.5      -24     13.5      0.1
+    43.5    -24.5     13.5      0.1
+
+    1 2
+      22     -9.5     12.5      0.9
+    21.5     -9.5        9      0.8
+
+    3 7
+    21.5     -9.5        9      0.8
+    22.5     -7.5      9.5      0.4
+    24.5     -4.5     12.5      0.4
+    26.5     -0.5       13      0.4
+      30        0     13.5      0.1
+      33      3.5       13      0.1
+    35.5        4       13      0.1
+
+    4 9
+    21.5     -9.5        9      0.8
+    25.5    -10.5      9.5        1
+    27.5      -10       10      0.5
+    30.5     -8.5     13.5      0.3
+      34     -7.5       14      0.3
+    39.5       -4     14.5      0.1
+    43.5     -2.5       15      0.1
+      48      0.5       15      0.1
+      48      0.5       15      0.1
+
+    4 10
+     0.5     -5.5      0.5      0.9
+      -1       -8        3      0.6
+      -3     -9.5      0.5      0.6
+    -3.5    -10.5        6      0.4
+    -7.5    -13.5        8      0.1
+    -7.5      -15      9.5      0.1
+    -9.5      -18        9      0.1
+    -9.5      -21        9      0.1
+      -8    -30.5      7.5      0.1
+      -8    -30.5      7.5      0.1
+
+    5 10
+      -2      0.5       -2        1
+    -4.5        0      5.5        1
+      -6       -2        9      0.7
+      -7       -3        6      0.4
+      -9        0        7      0.4
+     -11        3        4      0.1
+     -14        1        5      0.1
+   -17.5      3.5      5.5      0.1
+   -24.5      8.5        4      0.1
+   -24.5      8.5        4      0.1
+
+
+CONNECTIONS:
+
+        0    1
+        0    1
+        2    1
+        2    1
+        4    1
+        4    1
+
+
+
+
+/*----------------------------------------------------------------*/
+proc geometry() { 
+
+	/* NULL geometry procedure: keeps the user from
+	calling the geometry procedure in isolation. */
+
+    printf("\nYou must re-read the entire geometry\n")
+    printf("file to execute geometry().\n\n")
+}
+

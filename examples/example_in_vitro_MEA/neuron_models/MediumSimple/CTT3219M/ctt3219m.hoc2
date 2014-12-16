@@ -1,0 +1,99 @@
+create initseg,narrowr,axon
+
+initseg {L=40}
+narrowr {L=90}
+axon {L=100}
+initseg nseg=int(L/15)
+narrowr nseg=int(L/15)
+axon nseg=int(L/15)
+
+forall insert pas
+forall insert spike
+forall ena = 35.0
+forall ek = -75
+forall insert cad
+forall g_pas = .000008
+forall e_pas = -62.5
+forall Ra=110
+global_ra=110
+
+celsius=22
+
+for i = 0, 33-1 dend1[i] {
+gcabar_spike = 0.002
+gkbar_spike = 0.012
+gabar_spike = 0.036
+gkcbar_spike = 0.0
+gnabar_spike = 0.025
+}
+for i = 0, 19-1 dend2[i] {
+gcabar_spike = 0.002
+gkbar_spike = 0.012
+gabar_spike = 0.036
+gkcbar_spike = 0.0
+gnabar_spike = 0.025
+}
+dend3 {
+gcabar_spike = 0.002
+gkbar_spike = 0.012
+gabar_spike = 0.036
+gkcbar_spike = 0.0
+gnabar_spike = 0.025
+}
+
+soma {
+diam=11.6502 
+gcabar_spike = 0.0015
+gkbar_spike = 0.018
+gabar_spike = 0.054
+gkcbar_spike = 0.0
+gnabar_spike = 0.080
+}
+
+initseg {
+diam=1
+gcabar_spike = 0.0015
+gkbar_spike = 0.018
+gabar_spike = 0.054
+gkcbar_spike = 0.0
+gnabar_spike = 0.150
+}
+
+narrowr {
+diam=0.4
+gcabar_spike = 0.0
+gkbar_spike = 0.018
+gabar_spike = 0.054
+gkcbar_spike = 0.0
+gnabar_spike = 0.1
+}
+
+axon {
+diam=1
+gcabar_spike = 0.0
+gkbar_spike = 0.018
+gabar_spike = 0.0
+gkcbar_spike = 0.0
+gnabar_spike = 0.070
+}
+
+
+connect soma(1),initseg(0)
+connect initseg(1),narrowr(0)
+connect narrowr(1),axon(0)
+
+//objectvar clamp
+//soma clamp = new IClamp(0.5)
+// clamp.del = 0
+// clamp.dur = 400
+// clamp.amp = 0.01
+
+//load_proc("nrnmainmenu")
+access soma
+
+// xopen("test.ses")
+
+init()
+forall depth_cad = diam / 2
+init()
+
