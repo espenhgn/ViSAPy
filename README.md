@@ -7,7 +7,7 @@ algorithms.
 
 The tool is accompanied by the scientific publication:
 
-Espen Hagen, Torbjørn V. Ness, Amir Khosrowshahi, Christina Sørensen,
+Espen Hagen, Torbj√∏rn V. Ness, Amir Khosrowshahi, Christina S√∏rensen,
 Marianne Fyhn, Torkel Hafting, Felix Franke and Gaute T. Einevoll.
 "ViSAPy: A Python tool for biophysics-based generation of virtual spiking
 activity for evaluation of spike-sorting algorithms", Journal of
@@ -21,8 +21,8 @@ ViSAPy was developed in the Computational Neuroscience Group
 (http://compneuro.umb.no), Department of Mathemathical Sciences and Technology
 (http://www.nmbu.no/imt) at the Norwegian University of Life Sciences
 (http://www.nmbu.no) and Institute of Neuroscience and Medicine (INM-6) and
-Institute for Advanced Simulation (IAS-6), Jülich Research Centre and JARA,
-Jülich, Germany (http://www.fz-juelich.de/inm/inm-6/EN).
+Institute for Advanced Simulation (IAS-6), J√ºlich Research Centre and JARA,
+J√ºlich, Germany (http://www.fz-juelich.de/inm/inm-6/EN).
 
 This work was supported by the Research Council of Norway (eVita, NOTUR,
 NevroNor), the International Neuroinformatics Coordinating Facility (INCF)
