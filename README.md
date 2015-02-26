@@ -146,8 +146,12 @@ The example files are found in:                                             ::
     
 As an overview of the different example files:
 
-- ``examples/ISI_waveforms/ISI_waveforms.py`` corresponds to Results section 3.1.2 and figure references therein
+- ``examples/ISI_waveforms/ISI_waveforms.py`` corresponds to Results section
+    3.1.2 and figure references therein
 - ``examples/example_figure_02.py`` corresponds to Figure 2 in the publication
-- ``examples/example_in_vivo_tetrode.py`` corresponds to Results section 3.2 and figure references therein
-- ``examples/example_in_vivo_tetrode.py`` corresponds to Results section 3.3 and figure references therein
-- ``examples/example_in_vitro_MEA/example_in_vitro_MEA.py`` corresponds to Results-section 3.4 and figure references therein
+- ``examples/example_in_vivo_tetrode.py`` corresponds to Results section 3.2 and
+    figure references therein
+- ``examples/example_in_vivo_tetrode.py`` corresponds to Results section 3.3 and
+    figure references therein
+- ``examples/example_in_vitro_MEA/example_in_vitro_MEA.py`` corresponds to
+    Results section 3.4 and figure references therein
