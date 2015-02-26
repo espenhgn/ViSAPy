@@ -1153,7 +1153,7 @@ if RANK == 0:
             sp_waves['data'] = np.r_['1', sp_waves['data'], value['data']]
     
     #compute features
-    features = benchmark_data.fetPCA(sp_waves, ncomps=benchmark_data.nPCA)
+    features = ViSAPy.plottestdata.fetPCA(sp_waves, ncomps=benchmark_data.nPCA)
     
     
     

@@ -8,7 +8,6 @@ import h5py
 import scipy.signal as ss
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import svds
-import spike_sort
 from ViSAPy import CorrelatedNoise, GDF, DriftCell
 from matplotlib import cm
 from mpi4py import MPI
@@ -901,47 +900,7 @@ class BenchmarkData(object):
         COMM.Barrier()
               
 
-    def fetPCA(self, sp_waves, ncomps=2):
-        '''
-        Calculate principal components (PCs).
-        
-        Keyword arguments:
-        ::
 
-            spikes : dict
-            ncomps : int, optional
-                number of components to retain
-        
-        Returns:
-        ::
-        
-            dict with entries
-                data : np.array with principal components
-                times : time vector of PCAs
-                FS : sampling rate
-                names : str, labels of signals
-        '''
-    
-        data = sp_waves['data']
-        n_channels = data.shape[2]
-        pcas = np.zeros((n_channels*ncomps, data.shape[1]))
-        
-        for ch in range(data.shape[2]):
-            _, _, pcas[ch::data.shape[2], ] = spike_sort.features.PCA(
-                                                        data[:, :, ch], ncomps)
-    
-        
-        names = ["ch.%d:PC%d" % (j+1, i+1)
-                 for i in range(ncomps) for j in range(n_channels)]
-    
-        
-        outp = {}
-        outp['data'] = pcas.T
-        outp['time'] = sp_waves['time']
-        outp['FS'] = sp_waves['FS']
-        outp['names'] = names
-        
-        return outp
     
     
 class BenchmarkDataLayer(BenchmarkData):

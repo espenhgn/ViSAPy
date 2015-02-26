@@ -91,6 +91,50 @@ def get_colors(num=16, cmap=plt.cm.rainbow):
         colors.append(cmap(int(i)))
     return colors
 
+
+def fetPCA(sp_waves, ncomps=2):
+    '''
+    Calculate principal components (PCs).
+    
+    Keyword arguments:
+    ::
+
+        spikes : dict
+        ncomps : int, optional
+            number of components to retain
+    
+    Returns:
+    ::
+    
+        dict with entries
+            data : np.array with principal components
+            times : time vector of PCAs
+            FS : sampling rate
+            names : str, labels of signals
+    '''
+
+    data = sp_waves['data']
+    n_channels = data.shape[2]
+    pcas = np.zeros((n_channels*ncomps, data.shape[1]))
+    
+    for ch in range(data.shape[2]):
+        _, _, pcas[ch::data.shape[2], ] = spike_sort.features.PCA(
+                                                    data[:, :, ch], ncomps)
+
+    
+    names = ["ch.%d:PC%d" % (j+1, i+1)
+             for i in range(ncomps) for j in range(n_channels)]
+
+    
+    outp = {}
+    outp['data'] = pcas.T
+    outp['time'] = sp_waves['time']
+    outp['FS'] = sp_waves['FS']
+    outp['names'] = names
+    
+    return outp
+
+
 class plotBenchmarkData(object):
     
     def __init__(self, testdInst, cmap=plt.cm.rainbow, TRANSIENT=500.):
@@ -1950,7 +1994,7 @@ class plotBenchmarkData(object):
         #sp_waves = spike_sort.extract.extract_spikes(sp, spt, sp_win)
         features = spike_sort.features.combine(
                 (
-                    self.testdInst.fetPCA(sp_waves, ncomps=ncomps),
+                    fetPCA(sp_waves, ncomps=ncomps),
                 ),
                 norm=False
         )

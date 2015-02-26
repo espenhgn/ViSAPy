@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 '''
-Module ViSAPy provides methods used to create benchmark data for evaluation of
-spike sorting methods
+Module ViSAPy (Virtual Spiking Activity in Python) is a tool for generation of
+biophysically realistic benchmark data for evaluation of spike sorting
+algorithms.
 '''
+
 from gdf import GDF
 from spike_a_cut import SpikeACut
 from fcorr import LogBumpFilterBank, NoiseFeatures, CorrelatedNoise
