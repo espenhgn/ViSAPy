@@ -33,7 +33,8 @@ Brain (SMHB), the European Community through the ERC Advanced Grant 267351
 "NeuroCMOS", and the National Institutes of Health (NIH) through
 NIH grant R01EY019965. 
 
-This scientific software is released under the GNU Public License (see LICENSE).
+This scientific software is released under the GNU Public License
+(see LICENSE file).
 
 
 Dependencies
@@ -42,7 +43,7 @@ Dependencies
 ViSAPy is a module implemented using Python (http://www.python.org) and
 facilitates on other packages and modules developed for Python by an active
 open source community. To get started with (scientific) Python, a nice resource
-would be for example these pages: https://scipy-lectures.github.io
+would be for example these pages: https://scipy-lectures.github.io. 
 
 
 To make ViSAPy work and depending on what sort of Python distribution is used,
@@ -61,7 +62,8 @@ Note that pre-built Python distributions such as Anaconda
 (https://www.enthought.com/products/canopy/) may come with such packages
 preinstalled. If not, depending on operating system, such packages can usually
 be installed easily using the operating system's or other package managers
-(apt-get, synaptic, macports) or using the easy_install or pip command line
+(``apt-get``, ``synaptic``, ``macports``) or using the ``easy_install`` or
+``pip`` command line
 tools:                                                                      ::
 
     pip install <package name> --user
@@ -82,12 +84,16 @@ extracellular potentials around multicompartment neuron models and uses NEURON
 internally. Detailed information on getting LFPy (and also setting up NEURON) is
 given on the page http://compneuro.umb.no/LFPy/information.html
 
+ViSAPy has been developed and tested on OSX and Linux platforms running Python
+version 2.7.x. As NEST only do not support Windows, ViSAPy will only run on
+Posix based platforms (OSX, Linux, Unix).
+
 
 Installation
 ============
 
 After making sure that all prerequisites above are met, download the ViSAPy
-source codes from GitHub using the terminal. Make sure that 'git' version
+source codes from GitHub using the terminal. Make sure that ``git`` version
 control software is installed (http://git-scm.com):                         ::
 
     cd /where/to/put/files
@@ -139,13 +145,9 @@ The example files are found in:                                             ::
     /path/to/ViSAPy/examples
     
 As an overview of the different example files:
-- ``examples/ISI_waveforms/ISI_waveforms.py`` corresponds to Results section
-    3.1.2 and figure references therein
-- ``examples/example_figure_02.py`` corresponds to Figure 2 in the publication
-- ``examples/example_in_vivo_tetrode.py``corresponds to Results section 3.2 and
-    figure references therein
-- ``examples/example_in_vivo_tetrode.py``corresponds to Results section 3.3 and
-    figure references therein
-- ``examples/example_in_vitro_MEA/example_in_vitro_MEA.py``corresponds to
-    Results-section 3.4 and figure references therein
 
+- ``examples/ISI_waveforms/ISI_waveforms.py`` corresponds to Results section 3.1.2 and figure references therein
+- ``examples/example_figure_02.py`` corresponds to Figure 2 in the publication
+- ``examples/example_in_vivo_tetrode.py`` corresponds to Results section 3.2 and figure references therein
+- ``examples/example_in_vivo_tetrode.py`` corresponds to Results section 3.3 and figure references therein
+- ``examples/example_in_vitro_MEA/example_in_vitro_MEA.py`` corresponds to Results-section 3.4 and figure references therein
