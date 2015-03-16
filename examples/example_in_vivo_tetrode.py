@@ -255,12 +255,26 @@ filters.append({
 #note, filterFun should be either scipy.signal.lfilter or filtfilt
 
 
+#download experimental data for use in generation of noise
+fname = os.path.join('data', '08_2012101910.bin_tetrode_raw_cleaned.h5')
+if RANK == 0:
+    if not os.path.isdir('data'):
+        os.mkdir('data')
+    if not os.path.isfile(fname):
+        u = urllib2.urlopen('https://www.dropbox.com/s/28hmlig0h1d745e/' +
+                            '08_2012101910.bin_tetrode_raw_cleaned.h5?dl=1')
+        f = open(fname, 'w')
+        f.write(u.read())
+        f.close()    
+COMM.Barrier()
+
+
 #Noise parameters including noise covariance matrix
 noiseParameters = None
 #extract noise covariances extracted from experimental tetrode recording
 noiseFeaturesParameters = dict(logBumpParameters)
 noiseFeaturesParameters.update({
-    'fname' : '../../ExperimentalData2012.10.19_ChristinaPolytrode/08_2012101910.bin_tetrode_raw_cleaned.h5',
+    'fname' : fname,
     'outputfile' : os.path.join(savefolder, 'ViSAPy_noise.h5'),
     'T' : 15000.,
     'srate_in' : 48000.,

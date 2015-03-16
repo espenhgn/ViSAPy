@@ -244,12 +244,26 @@ logBumpParameters = dict(
 )
 
 
+#download experimental data for use in generation of noise
+fname = os.path.join('data', 'signal_converted.npy')
+if RANK == 0:
+    if not os.path.isdir('data'):
+        os.mkdir('data')
+    if not os.path.isfile(fname):
+        u = urllib2.urlopen('https://www.dropbox.com/s/u6auynymlcbbp36/' +
+                            'signal_converted.npy?dl=1')
+        f = open(fname, 'w')
+        f.write(u.read())
+        f.close()    
+COMM.Barrier()
+
+
 #Noise parameters including noise covariance matrix
 noiseParameters = None
 #extract noise covariances extracted from experimental tetrode recording
 noiseFeaturesParameters = dict(logBumpParameters)
 noiseFeaturesParameters.update({
-    'fname' : 'signal_converted.npy',
+    'fname' : fname,
     'outputfile' : os.path.join(savefolder, 'ViSAPy_noise.h5'),
     'T' : 15000,
     'srate_in' : 20000,
