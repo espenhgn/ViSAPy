@@ -309,7 +309,7 @@ class DriftCell(TemplateCell):
             driftint = None
         
         #run fadvance until t >= tstopms, and calculate LFP if asked for
-        if dotprodcoeffs == None:
+        if dotprodcoeffs is None:
             if not rec_imem:
                 print("rec_imem = %s, membrane currents will not be recorded!" \
                                   % str(rec_imem))
