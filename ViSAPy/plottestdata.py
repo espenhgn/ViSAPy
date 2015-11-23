@@ -251,13 +251,13 @@ class plotBenchmarkData(object):
                 print 'plot_figure_09() not ok', sys.exc_info()
 
             
-            try:
-                fig = self.plot_figure_10(cellindices)
-                fig.savefig(self.savefolder + '/figure_10.pdf', dpi=150)
-                print 'plot_figure_10() ok'
-                plt.close(fig)
-            except:
-                print 'plot_figure_10() not ok', sys.exc_info()
+            #try:
+            #    fig = self.plot_figure_10(cellindices)
+            #    fig.savefig(self.savefolder + '/figure_10.pdf', dpi=150)
+            #    print 'plot_figure_10() ok'
+            #    plt.close(fig)
+            #except:
+            #    print 'plot_figure_10() not ok', sys.exc_info()
 
 
             try:
@@ -1766,7 +1766,8 @@ class plotBenchmarkData(object):
             #loop over cells and find template with largest amplitude
             templates = []
             for cellkey in cellindices:
-                templates.append(sp_waves['data'][:, clust_idx==cellkey, :].mean(axis=1))
+                if sp_waves['data'][:, clust_idx==cellkey, :].shape[1] > 0:
+                    templates.append(sp_waves['data'][:, clust_idx==cellkey, :].mean(axis=1))
             templates = np.array(templates)
             
             vlim = abs(templates).max()
@@ -1789,11 +1790,12 @@ class plotBenchmarkData(object):
                 yticks = []
                 yticklabels = []
                 for i in xrange(self.testdInst.electrodeParameters['x'].size):
-                    for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
-                        zips.append(zip(xvec, x - i*scale))
+                    if sp_waves['data'][:, clust_idx==cellkey, i].shape[1] > 0:
+                        for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
+                            zips.append(zip(xvec, x - i*scale))
                         
-                    ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
-                             color='k', lw=2, clip_on=False, zorder=2)
+                        ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
+                                 color='k', lw=2, clip_on=False, zorder=2)
                     
                     yticks.append(-i*scale)
                     yticklabels.append('ch. %i' % (i+1))
@@ -2206,7 +2208,8 @@ class plotBenchmarkData(object):
         #loop over cells and find template with largest amplitude
         templates = []
         for cellkey in cellindices:
-            templates.append(sp_waves['data'][:, clust_idx==cellkey, :].mean(axis=1))
+            if sp_waves['data'][:, clust_idx==cellkey, :].shape[1] > 0:
+                templates.append(sp_waves['data'][:, clust_idx==cellkey, :].mean(axis=1))
         templates = np.array(templates)
         
         vlim = abs(templates).max()*2
@@ -2228,11 +2231,12 @@ class plotBenchmarkData(object):
             yticks = []
             yticklabels = []
             for i in xrange(self.testdInst.electrodeParameters['x'].size):
-                for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
-                    zips.append(zip(xvec, x - i*scale))
-                    
-                ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
-                         color='k', lw=2, clip_on=False, zorder=2)
+                if sp_waves['data'][:, clust_idx==cellkey, :].shape[1] > 0:
+                    for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
+                        zips.append(zip(xvec, x - i*scale))
+                        
+                    ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
+                             color='k', lw=2, clip_on=False, zorder=2)
                 
                 yticks.append(-i*scale)
                 yticklabels.append('ch. %i' % (i+1))

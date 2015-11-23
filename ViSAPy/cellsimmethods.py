@@ -17,7 +17,6 @@ from mpi4py import MPI
 COMM = MPI.COMM_WORLD
 SIZE = COMM.Get_size()
 RANK = COMM.Get_rank()
-MASTER_MODE = COMM.rank == 0
 
 
 
@@ -151,7 +150,7 @@ class BenchmarkData(object):
             self.default_h5_file = default_h5_file
         
         #put revision info in savefolder
-        if MASTER_MODE:
+        if RANK == 0:
             try:
                 os.system('git rev-parse HEAD -> %s/testdataRevision.txt' % \
                         self.savefolder)
@@ -303,7 +302,7 @@ class BenchmarkData(object):
         
         This method takes no keyword arguments.
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             if np.any(np.array(self.populationParameters.keys()) == 'X'):
                 pop_soma_pos = self.draw_rand_pos_square()
             else:
@@ -324,7 +323,7 @@ class BenchmarkData(object):
             
             list of strings, each string being path to a morphology file
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             shuffled_morphologies = self.shufflemorphos(self.morphologies,
                                                     n = self.POPULATION_SIZE)
         else:
@@ -344,7 +343,7 @@ class BenchmarkData(object):
             list of dicts,  on the form [{'z' : float}, ..], assigning a
             random rotation angle around z-axis applied to each cell.
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             rotations = []
             for i in xrange(self.POPULATION_SIZE):
                 defaultrot = self.defaultrotation.copy()
@@ -405,7 +404,7 @@ class BenchmarkData(object):
         u = np.where((v[:-1] < v_t) & (v[1:] >= v_t))[0]
 
         #mask spikes occurring prior to TRANSIENT
-        u = u[u >= TRANSIENT / self.cellParameters['timeres_python']]
+        u = u[u >= int(TRANSIENT / self.cellParameters['timeres_python'])]
         
         
         pre = -int(self.TEMPLATELEN * self.TEMPLATEOFFS)
@@ -414,13 +413,13 @@ class BenchmarkData(object):
         #mask spikes occurring at either start or end of signal
         u = u[(u >= -pre) & (u <= v.size-post)]
         
-        
         #splitting u in intervals if there are more than 1 AP,
         #filling w with these intervals:
         for i in u:
             inds = np.arange(i + pre, i + post)
             w = v[inds[inds < v.size]]
-            AP_train[inds[np.diff(w) == np.diff(w).max()]] = 1
+            
+            AP_train[inds[:-1][np.diff(w) == np.diff(w).max()]] = 1
                 
         return AP_train
     
@@ -688,7 +687,7 @@ class BenchmarkData(object):
                 indices of each cell in population, or subset of cells 
         
         '''
-        if cellindices == None:
+        if cellindices is None:
             cellindices = np.arange(self.POPULATION_SIZE)
         
         cells = {}
@@ -789,9 +788,9 @@ class BenchmarkData(object):
             
         
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             #using cellindices throughout
-            if cellindices == None:
+            if cellindices is None:
                 cellindices = np.arange(self.POPULATION_SIZE)
             
             #cells = self.read_lfp_AP_trains_cell_files()
@@ -1007,7 +1006,7 @@ class BenchmarkDataLayer(BenchmarkData):
             
             list of strings, each string a path to a NEURON template file        
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             shuffled_templatefiles = self.shuffle_templatefiles()
         else:
             shuffled_templatefiles = None
@@ -1059,7 +1058,7 @@ class BenchmarkDataLayer(BenchmarkData):
         morphology = self.shuffled_morphologies[cellindex]
         
         #check if we have drift
-        if self.driftParameters != None:
+        if self.driftParameters is not None:
             Cell = DriftCell
         else:
             Cell = LFPy.TemplateCell
@@ -1103,7 +1102,7 @@ class BenchmarkDataLayer(BenchmarkData):
                         SpTimes=os.path.join(self.savefolder, 'SpTimesIn.db'))
 
 
-            if self.driftParameters != None:
+            if self.driftParameters is not None:
                 #set up a 3D array dotprodcoeffs incorporating electrode drift
                 #at fixed intervals
                 driftCount = int(divmod(self.cellParameters['tstopms'],
@@ -1133,7 +1132,7 @@ class BenchmarkDataLayer(BenchmarkData):
             else:
                 pass
 
-            if self.driftParameters != None:
+            if self.driftParameters is not None:
                 if self.simulationParameters.has_key('to_file'):
                     if self.simulationParameters['to_file']:
                         cell.simulate(file_name=os.path.join(self.savefolder,
@@ -1317,7 +1316,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 connections
         
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             syn_idx_ex = []
             syn_idx_in = []
             
@@ -1388,7 +1387,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 presynaptic neuron identifiers in network
         
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             SpCellEx = []
             SpCellIn = []
             for i in xrange(self.POPULATION_SIZE):
@@ -1471,7 +1470,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
         will pick cells located on a region of the 1D-network
         with random Von Mises distributed numbers scaled to network nodes
         '''
-        if MASTER_MODE:
+        if RANK == 0:
             SpCellEx = []
             SpCellIn = []
             
@@ -1529,5 +1528,4 @@ class BenchmarkDataRing(BenchmarkDataLayer):
         SpCellIn = COMM.bcast(SpCellIn, root=0)
     
         return SpCellEx, SpCellIn
-    
     

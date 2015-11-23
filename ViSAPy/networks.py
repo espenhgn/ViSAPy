@@ -210,7 +210,7 @@ class Network(object):
         
         This method takes no keyword arguments
         '''
-        if self.espikes == None and self.ispikes == None:
+        if self.espikes is None and self.ispikes is None:
             print 'nothing to print because there are no spike recorders'
             return
         
@@ -269,7 +269,7 @@ class Network(object):
             matplotlib.figure.Figure object on RANK 0, None otherwise
         
         '''
-        if self.nodes_ex == None and self.nodes_in == None:
+        if self.nodes_ex is None and self.nodes_in is None:
             print "No nodes exist for {}, plot not possible".format(self)
             return
         
@@ -332,14 +332,14 @@ class Network(object):
             
             ax = fig.add_axes([0.1, 0.6, 0.8, 0.3])
             ax.plot(xe, ye, 'o',
-                    markersize=2,
+                    markersize=1,
                     markerfacecolor='r',
                     markeredgecolor='r',
                     alpha=0.5,
                     label='exc', rasterized=True)
             
             ax.plot(xi, yi, 'o',
-                    markersize=2,
+                    markersize=1,
                     markerfacecolor='b',
                     markeredgecolor='b',
                     alpha=0.5,
