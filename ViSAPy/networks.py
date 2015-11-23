@@ -48,7 +48,7 @@ class Network(object):
     def __init__(self,
                  simtime=1000.,
                  dt = 0.1,
-                 total_num_virtual_procs = SIZE,
+                 total_num_virtual_procs = SIZE*2,
                  savefolder = 'savedata',
                  label = 'spikes',
                  to_file = True,
@@ -556,10 +556,10 @@ class StationaryPoissonNetwork(Network):
         #create poisson generator    
         #noise = nest.Create("poisson_generator", 1, {"rate": rate})
         noise = nest.Create("sinusoidal_poisson_generator", 1,
-                            {"dc" : rate,
-                             "ac" : rate/2.,
-                             "freq" : 5.,
-                             "phi" : np.pi})
+                            {"rate" : rate,
+                             "amplitude" : rate/2.,
+                             "frequency" : 5.,
+                             "phase" : 360 / np.pi})
 
 
         return noise
@@ -881,7 +881,6 @@ class RingNetwork(Network):
                 pos_ex = np.append(pos_ex, np.array([[0.5],
                                         [gridconst / 2. + i*gridconst]]),
                                    axis=1)
-
         #dict for layer properties
         exc_set = {"positions": list(pos_ex.T),
                    "elements" : "iaf_psc_delta",
@@ -907,7 +906,7 @@ class RingNetwork(Network):
         nodes_in = nest.GetNodes(inh)
 
         #Set up connection profiles:
-        nest.SetDefaults("static_synapse", {"delay": self.delay})
+        #nest.SetDefaults("static_synapse", {"delay": self.delay})
         nest.CopyModel("static_synapse", "excitatory", {})
         nest.CopyModel("static_synapse", "inhibitory", {})
 
@@ -1257,17 +1256,19 @@ class ExternalNoiseRingNetwork(RingNetwork):
             if proj == 'exc':
                 nest.Connect(self.spike_generator[i:i + self.NE],
                              self.nodes_ex[0],
+                             conn_spec='one_to_one', 
                              syn_spec=dict(
                                 weight=self.weight,
-                                delay=self.dt)
+                                delay=1.)
                     )
                 i += self.NE
             elif proj == 'inh':
                 nest.Connect(self.spike_generator[i:i + self.NI],
                              self.nodes_in[0],
+                             conn_spec='one_to_one', 
                              syn_spec=dict(
                                 weight=self.weight,
-                                delay=self.dt)
+                                delay=1.)
                     )
                 i += self.NI
             else:
@@ -1292,7 +1293,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
             
             matplotlib.figure.Figure object on RANK 0, None otherwise
         '''
-        tvec = np.arange(self.simtime/self.dt) * self.dt
+        tvec = np.arange(self.simtime/self.dt +1) * self.dt
         tslice = (tvec >= xlim[0]) & (tvec <= xlim[1])
 
         gs = gridspec.GridSpec(10, 1)
@@ -1587,8 +1588,13 @@ if __name__ == '__main__':
     nest.sli_run("%s setverbosity" % 'M_WARNING')
     
     #test different Network instances
-    networks = [Network, StationaryPoissonNetwork, BrunelNetwork,
-                RingNetwork, ExternalNoiseRingNetwork]
+    networks = [
+        Network,
+        StationaryPoissonNetwork,
+        BrunelNetwork,
+        RingNetwork,
+        ExternalNoiseRingNetwork
+    ]
     
     #corresponding parameters, only setting the network size.
     parameters = [
@@ -1611,10 +1617,11 @@ if __name__ == '__main__':
         net.get_results()
         net.process_gdf_files()
         net.raster_plots()
-
+    
         if network == ExternalNoiseRingNetwork:
             net.raster_plots_full()
 
+    os.system('rm -r savedata')
     
     
     plt.show()

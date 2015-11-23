@@ -7,7 +7,7 @@ if not os.environ.has_key('DISPLAY'):
     matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
-from ViSAPy import GDF
+from ViSAPy import GDF, fcorr
 from mpi4py import MPI
 import spike_sort
 import h5py
@@ -181,7 +181,7 @@ class plotBenchmarkData(object):
         '''
         if RANK == 0:
             #using cellindices throughout
-            if cellindices == None:
+            if cellindices is None:
                 cellindices = np.arange(self.testdInst.POPULATION_SIZE)
             
             #get the cells
@@ -367,7 +367,7 @@ class plotBenchmarkData(object):
 
         
         #get some cells
-        if cells == None:
+        if cells is None:
             cells = self.testdInst.read_lfp_cell_files()
         
         #load 1 s of recording
@@ -905,8 +905,8 @@ class plotBenchmarkData(object):
         ax.set_rasterization_zorder(1)
 
         basist = 1000 / (2 * self.testdInst.cellParameters['timeres_python'])
-        from logbumps import logbumps
-        logbases = logbumps(n=f['C'].shape[0], t=basist,
+        #from logbumps import logbumps
+        logbases = fcorr.logbumps(n=f['C'].shape[0], t=basist,
                         normalize=False, alpha=f['alpha'].value, debug=False,
                         figno='Logbumps')
 
@@ -1063,7 +1063,7 @@ class plotBenchmarkData(object):
             '''plot histograms over which cells are used for input to
             the postsynaptic cells'''
             
-            if cellindices == None:
+            if cellindices is None:
                 cellindices = np.arange(self.testdInst.POPULATION_SIZE)
             ygrid = np.r_[cellindices, cellindices[-1]]
             yticks = cellindices + 0.5
@@ -1749,12 +1749,12 @@ class plotBenchmarkData(object):
         
         def plotSpikeWaveforms(cellindices=None, num_units=None):
             '''plot spike waveforms'''
-            if cellindices == None:
+            if cellindices is None:
                 cellindices = np.arange(self.testdInst.POPULATION_SIZE)
         
             #with many cells this is a bit cramped, plot only
             #num_units randomly chosen units, sorted  
-            if num_units != None:
+            if num_units is not None:
                 cellindices = np.random.permutation(cellindices)[:num_units]
                 cellindices.sort()
         
@@ -1958,7 +1958,7 @@ class plotBenchmarkData(object):
         plot PCA components etc obtained using ground truth
         spike times
         '''
-        if cellindices == None:
+        if cellindices is None:
             cellindices = np.arange(self.testdInst.POPULATION_SIZE)
 
 
@@ -2024,7 +2024,8 @@ class plotBenchmarkData(object):
                     ax.hist(data[clust_idx==cellkey, i], bins=bins,
                             histtype='stepfilled', alpha=1,
                             edgecolor='none', facecolor=self.colors[cellkey],
-                            zorder=-data[clust_idx==cellkey, i].size)
+                            zorder=-data[clust_idx==cellkey, i].size,
+                            rasterized=True)
         
         
                     [count, bins] = np.histogram(data[clust_idx==cellkey, i],
@@ -2188,12 +2189,12 @@ class plotBenchmarkData(object):
         fig = plt.figure(figsize=(10, 7))
         fig.subplots_adjust(left=0.06, right=0.96, bottom=0.07, top=0.92, wspace=0.2)
         
-        if cellindices == None:
+        if cellindices is None:
             cellindices = np.arange(self.testdInst.POPULATION_SIZE)
     
         #with many cells this is a bit cramped, plot only
         #num_units randomly chosen units, sorted  
-        if num_units != None:
+        if num_units is not None:
             cellindices = np.random.permutation(cellindices)[:num_units]
             cellindices.sort()
 
@@ -2534,7 +2535,7 @@ class plotBenchmarkData(object):
                         figsize=(4, 10)):
         '''Use the pt3d information to plot the population of cells'''
         
-        if cellindices == None:
+        if cellindices is None:
             cellindices = np.arange(self.testdInst.POPULATION_SIZE)
         
         cells = {}
