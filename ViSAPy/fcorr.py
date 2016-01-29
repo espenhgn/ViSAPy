@@ -15,7 +15,11 @@ import sys
 import glob
 from spike_a_cut import SpikeACut
 from scipy.interpolate import interp1d
+from mpi4py import MPI
 
+COMM = MPI.COMM_WORLD
+RANK = COMM.Get_rank()
+SIZE = COMM.Get_size()
 
 
 ################# Function definitions #########################################
@@ -225,18 +229,18 @@ class LogBumpFilterBank(object):
             np.ndarray, of shape (n, T, nchannels)
         
         '''
-        fdata = np.empty((self.n,) + data.shape)
+        fdata = np.zeros((self.n,) + data.shape)
 
         # filter data with filter bank, handling delay
         zi = np.zeros((self.taps-1, data.shape[1]))
         pad = (self.taps-1)/2
-        for i in xrange(self.n):
+        for i in range(self.n):
             print '.',
             zi.fill(0.)
             f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
             fdata[i,:-pad] = f[pad:]
             fdata[i,-pad:] = trans[:pad]
-
+    
         return fdata
 
 
@@ -495,6 +499,39 @@ class CorrelatedNoise(LogBumpFilterBank):
         self.amplitude_scaling = amplitude_scaling
         
 
+    def filter(self, data):
+        '''
+        Apply each log-bump filter in filter bank to data
+        
+        Keyword arguments:
+        ::
+            
+            data : np.ndarray, noise data of shape (T, nchannels)
+            
+        Returns:
+        ::
+            
+            np.ndarray, of shape (n, T, nchannels)
+        
+        '''
+        fdata = np.zeros((self.n,) + data.shape)
+
+        # filter data with filter bank, handling delay
+        zi = np.zeros((self.taps-1, data.shape[1]))
+        pad = (self.taps-1)/2
+        for i in range(self.n):
+            if i % SIZE == RANK:
+                print '.',
+                zi.fill(0.)
+                f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
+                fdata[i,:-pad] = f[pad:]
+                fdata[i,-pad:] = trans[:pad]
+        
+        DATA = np.zeros(fdata.shape).flatten()
+        COMM.Allreduce(fdata.flatten(), DATA)
+        return DATA.reshape(fdata.shape)
+    
+
     def correlated_noise(self, T):
         '''
         Generate correlated noise with per channel PSD and noise covariances
@@ -513,17 +550,23 @@ class CorrelatedNoise(LogBumpFilterBank):
         r = self.pink_noise(T)
         rf = self.filter(r)
         
+        data = np.zeros(rf.shape)
         
         for i in range(self.n):
-            sqrtC = np.linalg.cholesky(self.C[i])
-
-            # [HACK] normalize band, covariance will rescale data
-            rf[i] -= rf[i].mean(axis=0)[None]            
-            rf[i] /= rf[i].std(axis=0)[None]
-            
-            rf[i] = np.dot(sqrtC, rf[i].T).T
-            
-        return (rf.sum(axis=0).T * self.amplitude_scaling).astype('float32')
+            if i % SIZE == RANK:
+                sqrtC = np.linalg.cholesky(self.C[i])
+    
+                # [HACK] normalize band, covariance will rescale data
+                data[i, ] = rf[i, ]
+                data[i, ] -= data[i, ].mean(axis=0)[None]            
+                data[i, ] /= data[i].std(axis=0)[None]
+                
+                data[i, ] = np.dot(sqrtC, data[i, ].T).T
+        
+        DATA = np.zeros(data.shape)
+        COMM.Allreduce(data, DATA)
+        
+        return (DATA.sum(axis=0).T * self.amplitude_scaling).astype('float32')
     
 
     def pink_noise(self, T):
@@ -550,38 +593,47 @@ class CorrelatedNoise(LogBumpFilterBank):
         #temporary work with dimensions in base 2**12, much faster ifft
         rowsfft = 2**12 * (divmod(rows, 2**12)[0]+1)
         
+        data = np.zeros((rows, cols))
+        
+        #get state of random number generation, set unique seed per RANK
+        state = np.random.get_state()
+        np.random.seed(123456+RANK)
+        
+        
         #deal with each channel independently
         for i in xrange(cols):
-            #scale the PSD to fit new dimensions
-            psd = scale_matrix(self.psd[:, i], (rowsfft, )).astype('complex')
-            
-            #random phase angles distributed in frequency domain
-            phases = np.random.uniform(low=0, high=2*np.pi, size=rowsfft)
-            
-            #consruct ifft vector
-            psd *= np.exp(1j*phases)
-            del phases
-            
-            #create pinkened nosie
-            pink0 = ifft(psd).real
-            del psd
-            
-            #normalize noise
-            pink0 -= pink0.mean()
-            pink0 /= pink0.std()
-            
-            #build up pink noise matrix
-            if i == 0:
-                data = np.c_[pink0[:rows].astype('float32')]
-            else:
-                data = np.c_[data, pink0[:rows].astype('float32')]
-            del pink0
-            
+            if i % SIZE == RANK:
+                #scale the PSD to fit new dimensions
+                psd = scale_matrix(self.psd[:, i], (rowsfft, )).astype('complex')
+                
+                #random phase angles distributed in frequency domain
+                phases = np.random.uniform(low=0, high=2*np.pi, size=rowsfft)
+                
+                #consruct ifft vector
+                psd *= np.exp(1j*phases)
+                del phases
+                
+                #create pinkened nosie
+                pink0 = ifft(psd).real
+                del psd
+                
+                #normalize noise
+                pink0 -= pink0.mean()
+                pink0 /= pink0.std()
+                
+                data[:, i] = pink0[:rows].astype('float32')
+                
             print '.',
         
         print 'pinkened noise done'
+
+        #reset state
+        np.random.set_state(state)
         
-        return data
+        #sum arrays
+        DATA = np.zeros(data.shape)
+        COMM.Allreduce(data, DATA)        
+        return DATA
 
 
 
