@@ -72,7 +72,7 @@ class NonStationaryPoisson(object):
         the noise signal is normed to [0, rate*2], and rate is rate*2
         '''
         poisson = []
-        for i in xrange(self.N):
+        for i in range(self.N):
             poisson.append(self.nonstationary_poisson(self.tvec, self.dt,
                                         self.lambda_t, self.rate))
         

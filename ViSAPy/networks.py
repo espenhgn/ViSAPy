@@ -224,13 +224,13 @@ class Network(object):
         
         #calculate proper network rates on RANK 0
         if RANK == 0:
-            for i in xrange(1, SIZE):
+            for i in range(1, SIZE):
                 erate += COMM.recv(source=MPI.ANY_SOURCE)
         else:
             COMM.send(erate, dest=0)
         
         if RANK == 0:
-            for i in xrange(1, SIZE):
+            for i in range(1, SIZE):
                 irate += COMM.recv(source=MPI.ANY_SOURCE)
         else:
             COMM.send(irate, dest=0)
@@ -600,13 +600,13 @@ class StationaryPoissonNetwork(Network):
         
         #calculate proper network rates on RANK 0
         if RANK == 0:
-            for i in xrange(1, SIZE):
+            for i in range(1, SIZE):
                 erate += COMM.recv(source=MPI.ANY_SOURCE)
         else:
             COMM.send(erate, dest=0)
         
         if RANK == 0:
-            for i in xrange(1, SIZE):
+            for i in range(1, SIZE):
                 irate += COMM.recv(source=MPI.ANY_SOURCE)
         else:
             COMM.send(irate, dest=0)
@@ -872,7 +872,7 @@ class RingNetwork(Network):
         gridconst = 1 / float(self.N)
         pos_ex = np.array([[], []])
         pos_in = np.array([[], []])
-        for i in xrange(self.N):
+        for i in range(self.N):
             if np.mod(i, 5) == 0:
                 pos_in = np.append(pos_in, np.array([[0.5],
                                         [gridconst / 2. + i*gridconst]]),
@@ -1602,7 +1602,8 @@ if __name__ == '__main__':
         dict(NE=4000, NI=1000),
         dict(order=1000),
         dict(N=5000),
-        dict(lambda_t=np.cos(5*2*np.pi*np.linspace(0., 1., 10001)),
+        dict(N=5000,
+             lambda_t=np.cos(5*2*np.pi*np.linspace(0., 1., 10001)),
              rate=20., weight=2.)
     ]
     

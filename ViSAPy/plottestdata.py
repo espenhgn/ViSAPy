@@ -82,7 +82,7 @@ def remove_axis_junk(ax, which=['right', 'top']):
 def get_colors(num=16, cmap=plt.cm.rainbow):
     '''return a list of color tuples to use in plots'''
     colors = []
-    for i in xrange(num):
+    for i in range(num):
         i *= 256.
         if num > 1:
             i /= num - 1.
@@ -164,7 +164,7 @@ class plotBenchmarkData(object):
 
         #using these colors and alphas:        
         self.electrodeColors = []
-        for i in xrange(self.testdInst.electrodeParameters['x'].size):
+        for i in range(self.testdInst.electrodeParameters['x'].size):
             self.electrodeColors.append('k')
 
 
@@ -574,7 +574,7 @@ class plotBenchmarkData(object):
         ax6.fill(x, z, color=(0.5,0.5,0.5), lw=None, alpha=0.5, zorder=-1.)
         
         #contact points
-        for i in xrange(len(self.electrodeColors)):
+        for i in range(len(self.electrodeColors)):
             radius = self.testdInst.electrodeParameters['r']
             center = [self.testdInst.electrodeParameters['x'][i],
                    self.testdInst.electrodeParameters['z'][i]]
@@ -590,7 +590,7 @@ class plotBenchmarkData(object):
         theta = theta[::-1]
         radius = 50
         ncont = len(self.electrodeColors)
-        for i in xrange(ncont):
+        for i in range(ncont):
             x = np.r_[X[i],
                       i*10,
                       i*10,
@@ -911,7 +911,7 @@ class plotBenchmarkData(object):
                         figno='Logbumps')
 
         zips = []
-        for i in xrange(f['C'].shape[0]):
+        for i in range(f['C'].shape[0]):
             zips.append(zip(np.arange(logbases[i].size)[1:], logbases[i][1:]))
             
         line_segments = LineCollection(zips,
@@ -966,15 +966,15 @@ class plotBenchmarkData(object):
         
         #some grid for subplots
         x = []
-        for i in xrange(rows):
+        for i in range(rows):
             x = np.r_[x, np.linspace(0.35, 0.92-width, cols)]
         y = []
-        for i in xrange(cols):
+        for i in range(cols):
             y = np.r_[y, np.linspace(0.35, 0.675-height, rows)]
         y.sort()
         y = y[::-1]
         
-        for i in xrange(f['C'].shape[0]):
+        for i in range(f['C'].shape[0]):
             ax = fig.add_axes([x[i], y[i], width, height], frameon=False)
             im = ax.matshow(f['C'].value[i, ], rasterized=True,
                             cmap = plt.cm.get_cmap('jet', f['C'].shape[0]))
@@ -1469,10 +1469,10 @@ class plotBenchmarkData(object):
             
             #some grid for subplots
             x = []
-            for i in xrange(rows):
+            for i in range(rows):
                 x = np.r_[x, np.linspace(0.06, 0.675-width, cols)]
             y = []
-            for i in xrange(cols):
+            for i in range(cols):
                 y = np.r_[y, np.linspace(0.04, 0.22, rows+1)[:-1]]
             y.sort()
             y = y[::-1]
@@ -1789,7 +1789,7 @@ class plotBenchmarkData(object):
                 zips = []
                 yticks = []
                 yticklabels = []
-                for i in xrange(self.testdInst.electrodeParameters['x'].size):
+                for i in range(self.testdInst.electrodeParameters['x'].size):
                     if sp_waves['data'][:, clust_idx==cellkey, i].shape[1] > 0:
                         for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
                             zips.append(zip(xvec, x - i*scale))
@@ -1848,7 +1848,7 @@ class plotBenchmarkData(object):
         
             #concatenate some tvecs
             tvecs = tvec
-            for i in xrange(lfp_filtered.shape[0]):
+            for i in range(lfp_filtered.shape[0]):
                 if i != 0:
                     tvecs = np.r_[tvecs, tvec]
         
@@ -1905,7 +1905,7 @@ class plotBenchmarkData(object):
         
         
                 #shift the values accrd to channel
-                for i in xrange(lfp_filtered.shape[0]):
+                for i in range(lfp_filtered.shape[0]):
                     nanmat[i, ] -= i*scale
                     
                 nanmat = nanmat.flatten()
@@ -1927,7 +1927,7 @@ class plotBenchmarkData(object):
         
             ax.set_yticks(np.arange(lfp_filtered.shape[0])*-scale)
             labels = []
-            for i in xrange(lfp_filtered.shape[0]): labels.append('ch. %i' % (i+1))
+            for i in range(lfp_filtered.shape[0]): labels.append('ch. %i' % (i+1))
             ax.set_yticklabels(labels)
             ax.set_xlabel(r'$t$ (ms)', labelpad=0.1)
             ax.set_title('200 ms excerpt with superimposed templates')
@@ -2230,7 +2230,7 @@ class plotBenchmarkData(object):
             zips = []
             yticks = []
             yticklabels = []
-            for i in xrange(self.testdInst.electrodeParameters['x'].size):
+            for i in range(self.testdInst.electrodeParameters['x'].size):
                 if sp_waves['data'][:, clust_idx==cellkey, :].shape[1] > 0:
                     for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
                         zips.append(zip(xvec, x - i*scale))
@@ -2315,7 +2315,7 @@ class plotBenchmarkData(object):
                  #markersize=markersize/2,
                  clip_on=False)
         
-        for i in xrange(TD.POPULATION_SIZE):
+        for i in range(TD.POPULATION_SIZE):
             x = TD.pop_soma_pos[i]['xpos']
             y = TD.pop_soma_pos[i]['ypos']
             #mfc = self.colors[i]
