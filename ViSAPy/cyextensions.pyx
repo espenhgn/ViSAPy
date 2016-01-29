@@ -96,8 +96,8 @@ def ouProcess(
                     negative_indices=False] dB = np.random.normal(0, sqrtdt,
                                                                   size=(ntsteps,
                                                                         nX))
-    for i in xrange(ntsteps):
-        for k in xrange(nX):
+    for i in range(ntsteps):
+        for k in range(nX):
             X[k] += (m - X[k]) * dt + sigma * dB[i, k]
         
         Xarray[i, ] = X
@@ -148,8 +148,8 @@ def ouProcessCorrelated(
                     negative_indices=False] dB = np.random.normal(0, sqrtdt,
                                                                   size=(ntsteps,
                                                                         nX))
-    for i in xrange(ntsteps):
-        for k in xrange(nX):
+    for i in range(ntsteps):
+        for k in range(nX):
             X[k] += (m - X[k]) * dt + sigma * dB[i, k]
             
         Xarray[i, ] = X
