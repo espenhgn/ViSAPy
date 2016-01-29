@@ -80,7 +80,7 @@ class GDF(object):
         with open(fname, 'rb') as f:
             while True:
                 a = []
-                for i in xrange(self.bsize):
+                for i in range(self.bsize):
                     line = f.readline()
                     if not line: break
                     a.append(line.split())
