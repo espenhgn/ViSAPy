@@ -176,7 +176,7 @@ class BenchmarkData(object):
 
         #using these colors and alphas:        
         self.colors = []
-        for i in xrange(self.POPULATION_SIZE):
+        for i in range(self.POPULATION_SIZE):
             i *= 256.
             if self.POPULATION_SIZE > 1:
                 i /= self.POPULATION_SIZE - 1.
@@ -197,7 +197,7 @@ class BenchmarkData(object):
         
         This method takes no keyword arguments.
         '''
-        for cellindex in xrange(self.POPULATION_SIZE):
+        for cellindex in range(self.POPULATION_SIZE):
             #in case more cores than cells are available,
             #start cell simulation on every fixed interval RANK
             RANKINTERVAL = divmod(SIZE, self.POPULATION_SIZE)[0]
@@ -345,7 +345,7 @@ class BenchmarkData(object):
         '''
         if RANK == 0:
             rotations = []
-            for i in xrange(self.POPULATION_SIZE):
+            for i in range(self.POPULATION_SIZE):
                 defaultrot = self.defaultrotation.copy()
                 defaultrot.update({'z' : np.random.rand() * 2 * np.pi})
                 rotations.append(defaultrot)
@@ -371,7 +371,7 @@ class BenchmarkData(object):
         '''
         filelist = []
         low = np.size(files)
-        for i in xrange(n):
+        for i in range(n):
             filelist.append(files[np.random.randint(low)])
         return filelist
 
@@ -442,7 +442,7 @@ class BenchmarkData(object):
         '''
         min_cell_interdist = np.zeros(self.POPULATION_SIZE)
         
-        for i in xrange(self.POPULATION_SIZE):
+        for i in range(self.POPULATION_SIZE):
             cell_interdist = np.sqrt((x[i] - x)**2
                     + (y[i] - y)**2
                     + (z[i] - z)**2)
@@ -479,7 +479,7 @@ class BenchmarkData(object):
         if min_r.size > 0:
             if type(min_r) == type(np.array([])):
                 j = 0
-                for j in xrange(min_r.shape[0]):
+                for j in range(min_r.shape[0]):
                     min_r_z[j] = np.interp(z, min_r[0,], min_r[1,])
                     if j > 0:
                         [w] = np.where(min_r_z[j] < min_r_z[j-1])
@@ -497,12 +497,12 @@ class BenchmarkData(object):
             cell_interdist < min_cell_interdist))
             
         while len(u) > 0:
-            for i in xrange(len(u)):
+            for i in range(len(u)):
                 x[u[i]] = (np.random.rand()-0.5)*radius*2
                 y[u[i]] = (np.random.rand()-0.5)*radius*2
                 z[u[i]] = np.random.rand()*(z_max - z_min) + z_min
                 if type(min_r) == type(()):
-                    for j in xrange(np.shape(min_r)[0]):
+                    for j in range(np.shape(min_r)[0]):
                         min_r_z[j][u[i]] = \
                                 np.interp(z[u[i]], min_r[0,], min_r[1,])
                         if j > 0:
@@ -520,7 +520,7 @@ class BenchmarkData(object):
                 cell_interdist < min_cell_interdist))
     
         soma_pos = []
-        for i in xrange(self.POPULATION_SIZE):
+        for i in range(self.POPULATION_SIZE):
             soma_pos.append({'xpos' : x[i], 'ypos' : y[i], 'zpos' : z[i]})
         
         return soma_pos
@@ -582,7 +582,7 @@ class BenchmarkData(object):
 
         j = 0
         while len(u) > 0:
-            for i in xrange(len(u)):
+            for i in range(len(u)):
                 x[u[i]] = (np.random.rand()-0.5)*radius*2
                 y[u[i]] = (np.random.rand()-0.5)*radius*2
                 z[u[i]] = np.random.rand()*(z_max - z_min) + z_min
@@ -609,7 +609,7 @@ class BenchmarkData(object):
                 raise Exception, 'after %i iters, can not position somas' % j
             
         soma_pos = []
-        for i in xrange(self.POPULATION_SIZE):
+        for i in range(self.POPULATION_SIZE):
             soma_pos.append({'xpos' : x[i], 'ypos' : y[i], 'zpos' : z[i]})
     
         return soma_pos
@@ -844,8 +844,8 @@ class BenchmarkData(object):
             #save the somatic placements:
             pop_soma_pos = np.zeros((self.POPULATION_SIZE, 3))
             keys = ['xpos', 'ypos', 'zpos']
-            for i in xrange(self.POPULATION_SIZE):
-                for j in xrange(3):
+            for i in range(self.POPULATION_SIZE):
+                for j in range(3):
                     pop_soma_pos[i, j] = self.pop_soma_pos[i][keys[j]]
             np.savetxt(self.savefolder + '/ViSAPy_somapos.gdf', pop_soma_pos)
             
@@ -1028,7 +1028,7 @@ class BenchmarkDataLayer(BenchmarkData):
         n = self.POPULATION_SIZE
         codelist = []
         low = np.shape(self.templatefiles)[0]
-        for i in xrange(n):
+        for i in range(n):
             codelist.append(self.templatefiles[np.random.randint(low)])
         return codelist
 
@@ -1085,7 +1085,7 @@ class BenchmarkDataLayer(BenchmarkData):
             allsec = []
             for sec in cell.allseclist:
                 allsecnames.append(sec.name())
-                for i in xrange(sec.nseg):
+                for i in range(sec.nseg):
                     allsec.append(sec.name())
             cell.allsecnames = allsecnames
             cell.allsec = allsec
@@ -1116,7 +1116,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 cell.imem = np.eye(cell.totnsegs)
                 cell.tvec = np.arange(cell.totnsegs)*cell.timeres_python
                 print 'calculating dot-prod coefficients',
-                for i in xrange(driftCount):
+                for i in range(driftCount):
                     elParameters = self.electrodeParameters.copy()
                     elParameters['z'] += i * self.driftParameters['driftShift']
                     elParameters['z'] += self.driftParameters['driftOnset']
@@ -1244,10 +1244,10 @@ class BenchmarkDataLayer(BenchmarkData):
         
         
         i = 0
-        for j in xrange(cell.totnsegs):
+        for j in range(cell.totnsegs):
             if idx_hist[j] > 0:
                 synspikes = []
-                for k in xrange(idx_hist[j]):
+                for k in range(idx_hist[j]):
                     synspikes = np.r_[synspikes, spikes[i]]
                     i += 1
                 synparams.update({'idx' : j})
@@ -1295,7 +1295,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 y0 = cell.ystart[cell.get_idx(sec.name())[0]]
                 z0 = cell.zstart[cell.get_idx(sec.name())[0]]
                 L = sec.L
-                for j in xrange(int(neuron.h.n3d())):
+                for j in range(int(neuron.h.n3d())):
                     neuron.h.pt3dchange(j, x0, y0, z0,
                                      sec.diam)
                     z0 -= L / (neuron.h.n3d()-1)
@@ -1329,7 +1329,7 @@ class BenchmarkDataLayer(BenchmarkData):
             
                
             print 'find synaptic placements.', 
-            for cellindex in xrange(self.POPULATION_SIZE):
+            for cellindex in range(self.POPULATION_SIZE):
                 print '.',
                 cellParameters = dict(self.cellParameters)
                 cellParameters.update(dict(
@@ -1390,7 +1390,7 @@ class BenchmarkDataLayer(BenchmarkData):
         if RANK == 0:
             SpCellEx = []
             SpCellIn = []
-            for i in xrange(self.POPULATION_SIZE):
+            for i in range(self.POPULATION_SIZE):
                 SpCellEx.append(np.random.randint(self.nodes_ex.min(),
                                                   self.nodes_ex.max(),
                                                   size=self.synIdxEx[i].size))
@@ -1474,7 +1474,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
             SpCellEx = []
             SpCellIn = []
             
-            for i in xrange(self.POPULATION_SIZE):
+            for i in range(self.POPULATION_SIZE):
                 if self.randdist == np.random.vonmises:
                     #pick vonmises distributed numbers on [-pi, pi] interval
                     distEx = self.randdist(self.loc_EX[i], self.sigma_EX,
