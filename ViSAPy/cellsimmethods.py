@@ -182,7 +182,7 @@ class BenchmarkData(object):
                 i /= self.POPULATION_SIZE - 1.
             else:
                 i /= self.POPULATION_SIZE
-            self.colors.append(cm.rainbow(int(i)))
+            self.colors.append(cm.Set1(int(i)))
         
         self.alphas = np.ones(self.POPULATION_SIZE)
 
