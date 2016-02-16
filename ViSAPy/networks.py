@@ -8,13 +8,13 @@ if not os.environ.has_key('DISPLAY'):
     import matplotlib
     matplotlib.use('Agg')
 import h5py
-from ViSAPy import GDF, CorrelatedNoise, NonStationaryPoisson
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import scipy.signal as ss
 import nest
 from mpi4py import MPI
 from nest import topology
+from ViSAPy import GDF, CorrelatedNoise, NonStationaryPoisson
 
 
 #set some plot attributes
@@ -48,7 +48,7 @@ class Network(object):
     def __init__(self,
                  simtime=1000.,
                  dt = 0.1,
-                 total_num_virtual_procs = SIZE*2,
+                 total_num_virtual_procs = SIZE,
                  savefolder = 'savedata',
                  label = 'spikes',
                  to_file = True,
@@ -92,7 +92,9 @@ class Network(object):
                 os.system('git rev-parse HEAD -> %s/NetworkRevision.txt' % \
                         self.savefolder)
             except:
-                pass        
+                pass
+
+        COMM.Barrier()
         
         #None-type some vars that may be created by the subclasses
         self.NE = None
@@ -869,7 +871,7 @@ class RingNetwork(Network):
         nest.SetDefaults("iaf_psc_delta", self.neuron_params)
                 
         #Create layers:
-        gridconst = 1 / float(self.N)
+        gridconst = 1. / self.N
         pos_ex = np.array([[], []])
         pos_in = np.array([[], []])
         for i in range(self.N):
@@ -881,6 +883,7 @@ class RingNetwork(Network):
                 pos_ex = np.append(pos_ex, np.array([[0.5],
                                         [gridconst / 2. + i*gridconst]]),
                                    axis=1)
+        
         #dict for layer properties
         exc_set = {"positions": list(pos_ex.T),
                    "elements" : "iaf_psc_delta",
@@ -891,7 +894,7 @@ class RingNetwork(Network):
         
         #create layer, get nodes
         exc = topology.CreateLayer(exc_set)
-        nodes_ex = nest.GetNodes(exc)
+        nodes_ex = nest.GetLeaves(exc)
 
         #dict for layer properties
         inh_set = {"positions": list(pos_in.T),
@@ -903,7 +906,7 @@ class RingNetwork(Network):
 
         #create layer, get nodes
         inh = topology.CreateLayer(inh_set)
-        nodes_in = nest.GetNodes(inh)
+        nodes_in = nest.GetLeaves(inh)
 
         #Set up connection profiles:
         #nest.SetDefaults("static_synapse", {"delay": self.delay})
