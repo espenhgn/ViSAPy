@@ -360,7 +360,6 @@ class NoiseFeatures(LogBumpFilterBank):
                 if self.remove_spikes:
                     self._remove_spikes(**self.remove_spikes_args)        
                 self.psd, self.freqs = self.spectra(self.input_data)
-                
                 self.fdata = self.filter(self.input_data)
                 self.C = self.covariance(self.fdata)
             
@@ -475,7 +474,7 @@ class NoiseFeatures(LogBumpFilterBank):
 
 class CorrelatedNoise(LogBumpFilterBank):
     '''class CorrelatedNoise, inherits class NoiseFeatures'''
-    def __init__(self, psd, C, amplitude_scaling=1., **kwargs):
+    def __init__(self, psd, C, amplitude_scaling=1., savefolder='savefolder', **kwargs):
         '''
         Initialization of class CorrelatedNoise, inherits class NoiseFeatures.
         Provide methods for generating 
@@ -497,6 +496,7 @@ class CorrelatedNoise(LogBumpFilterBank):
         self.psd = psd
         self.C = C
         self.amplitude_scaling = amplitude_scaling
+        self.savefolder = savefolder
         
 
     def filter(self, data):
@@ -514,7 +514,8 @@ class CorrelatedNoise(LogBumpFilterBank):
             np.ndarray, of shape (n, T, nchannels)
         
         '''
-        fdata = np.zeros((self.n,) + data.shape)
+        f_ = h5py.File(os.path.join(self.savefolder,
+                                    'tmpnoise_rank{}.h5'.format(RANK)), 'w')
 
         # filter data with filter bank, handling delay
         zi = np.zeros((self.taps-1, data.shape[1]))
@@ -522,14 +523,32 @@ class CorrelatedNoise(LogBumpFilterBank):
         for i in range(self.n):
             if i % SIZE == RANK:
                 print '.',
-                zi.fill(0.)
                 f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
-                fdata[i,:-pad] = f[pad:]
-                fdata[i,-pad:] = trans[:pad]
+                f_[str(i)] = np.r_[f[pad:], trans[:pad]]
         
-        DATA = np.zeros(fdata.shape).flatten()
-        COMM.Allreduce(fdata.flatten(), DATA)
-        return DATA.reshape(fdata.shape)
+        f_.close()
+        
+        if RANK == 0:
+            f = h5py.File(os.path.join(self.savefolder, 'tmpnoise.h5'), 'w')
+            f['data'] = np.zeros((self.n,) + data.shape)
+            for j in range(SIZE):
+                f_ = h5py.File(os.path.join(self.savefolder,
+                                            'tmpnoise_rank{}.h5'.format(j)),
+                               'r')
+                for i in range(self.n):
+                    if i % SIZE == j:
+                        f['data'][i, ] += f_[str(i)]
+                f_.close()
+            fdata = f['data'].value
+            f.close()
+        
+        # remove temporary files
+        for j in range(SIZE):
+            if RANK == 0:
+                os.system('rm {}'.format(os.path.join(self.savefolder,
+                                                      'tmpnoise_rank{}.h5'.format(j))))
+        
+        COMM.Barrier()
     
 
     def correlated_noise(self, T):
@@ -547,27 +566,32 @@ class CorrelatedNoise(LogBumpFilterBank):
             
             np.ndarray, shape (nchannels, T*srate_out*1E3+1), correlated noise
         '''
-        r = self.pink_noise(T)
-        rf = self.filter(r)
         
-        data = np.zeros(rf.shape)
-        
-        for i in range(self.n):
-            if i % SIZE == RANK:
+        # rf = self.filter(self.pink_noise(T))
+        self.filter(self.pink_noise(T))
+
+        if RANK == 0:
+            f = h5py.File(os.path.join(self.savefolder, 'tmpnoise.h5'), 'r')
+            DATA = np.zeros(f['data'][0, ].shape)
+            for i in range(self.n):
                 sqrtC = np.linalg.cholesky(self.C[i])
-    
-                # [HACK] normalize band, covariance will rescale data
-                data[i, ] = rf[i, ]
-                data[i, ] -= data[i, ].mean(axis=0)[None]            
-                data[i, ] /= data[i].std(axis=0)[None]
-                
-                data[i, ] = np.dot(sqrtC, data[i, ].T).T
-        
-        DATA = np.zeros(data.shape)
-        COMM.Allreduce(data, DATA)
-        
-        return (DATA.sum(axis=0).T * self.amplitude_scaling).astype('float32')
-    
+                data = f['data'][i, ]
+                data -= data.mean(axis=0)
+                data /= data.std(axis=0)
+                data = np.dot(sqrtC, data.T).T
+                DATA += data
+            
+            f.close()
+            # remove temporary file
+            os.system('rm {}'.format(os.path.join(self.savefolder,
+                                                  'tmpnoise.h5')))
+            DATA = DATA.T
+            DATA *= self.amplitude_scaling
+            DATA = DATA.astype('float32')
+        else:
+            DATA = None
+        return COMM.bcast(DATA)
+  
 
     def pink_noise(self, T):
         '''
@@ -634,8 +658,6 @@ class CorrelatedNoise(LogBumpFilterBank):
         DATA = np.zeros(data.shape)
         COMM.Allreduce(data, DATA)        
         return DATA
-
-
 
 
 if __name__ == '__main__':
