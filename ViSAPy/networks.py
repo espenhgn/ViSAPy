@@ -799,6 +799,9 @@ class RingNetwork(Network):
                 J_ex = 0.1,
                 g = 6.,
                 eta = 1.5,
+                allow_autapses = False,
+                allow_multapses = False,
+                exc_inh_assymetry = 1.,
                 **kwargs
         ):
         '''
@@ -823,6 +826,11 @@ class RingNetwork(Network):
                 postsynaptic potential amplitude in mV
             g : float, relative inhibition strength
             eta : float, ratio between external and threshold rate
+            allow_autapses : Bool, allow connections to self
+            allow_multapses : Bool, allow multiple synapses per connection
+            exc_inh_assymetry : float, relative width of inhibitory vs.
+                excitatory connections, values > 1 means inhibitory range is
+                greater than excitatory range
             **kwargs : see parent class ViSAPy.Network
 
 
@@ -843,6 +851,14 @@ class RingNetwork(Network):
         self.J_in       = -self.g*self.J_ex
         self.eta        =  eta
         self.p_rate     =  self.eta*1000.
+        self.allow_autapses = allow_autapses
+        self.allow_multapses = allow_multapses
+        if exc_inh_assymetry != 1.:
+            try:
+                assert(allow_multapses)
+            except AssertionError as ae:
+                raise ae, 'allow_multapses must be True for exc_inh_assymetry != 1'
+        self.exc_inh_assymetry = exc_inh_assymetry
 
         #create dictionary for LIF neuron params
         self.neuron_params = {
@@ -919,14 +935,14 @@ class RingNetwork(Network):
             "mask"            : {
                  "rectangular": {
                      "lower_left" :     [0.5*(1.-gridconst),
-                                        -(self.K+0.5)*gridconst],
+                                        -(self.K+0.5)*gridconst / self.exc_inh_assymetry],
                      "upper_right" :    [0.5*(1.+gridconst),
-                                        (self.K+0.5)*gridconst]}},
+                                        (self.K+0.5)*gridconst / self.exc_inh_assymetry]}},
              "weights"         : self.J_ex,
              "delays"          : self.delay,
              "synapse_model"   : "excitatory",
-             "allow_autapses"  : False,
-             "allow_multapses" : False
+             "allow_autapses"  : self.allow_autapses,
+             "allow_multapses" : self.allow_multapses
              }
 
         inh_par = {
@@ -934,14 +950,14 @@ class RingNetwork(Network):
             "mask"            : {
                  "rectangular": {
                      "lower_left" :     [0.5 * (1. - gridconst),
-                                        -(self.K + 0.5) * gridconst],
+                                        -(self.K + 0.5) * gridconst * self.exc_inh_assymetry],
                      "upper_right" :    [0.5 * (1. + gridconst),
-                                        (self.K + 0.5) * gridconst]}},
+                                        (self.K + 0.5) * gridconst * self.exc_inh_assymetry]}},
              "weights"         : self.J_in,
              "delays"          : self.delay,
              "synapse_model"   : "inhibitory",
-             "allow_autapses"  : False,
-             "allow_multapses" : False
+             "allow_autapses"  : self.allow_autapses,
+             "allow_multapses" : self.allow_multapses
              }
 
         #Connect layers:
