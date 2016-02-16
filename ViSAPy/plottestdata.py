@@ -137,7 +137,7 @@ def fetPCA(sp_waves, ncomps=2):
 
 class plotBenchmarkData(object):
     
-    def __init__(self, testdInst, cmap=plt.cm.rainbow, TRANSIENT=500.):
+    def __init__(self, testdInst, cmap=plt.cm.Set1, TRANSIENT=500.):
         '''
         Plotting methods
         
@@ -270,8 +270,8 @@ class plotBenchmarkData(object):
 
                     
             try:
-                if len(cellindices) > 8:
-                    fig = self.plot_figure_12(num_units=8)
+                if len(cellindices) > 12:
+                    fig = self.plot_figure_12(num_units=12)
                 else:
                     fig = self.plot_figure_12(cellindices)
                 fig.savefig(os.path.join(self.savefolder, 'figure_12.pdf'),
@@ -2236,7 +2236,7 @@ class plotBenchmarkData(object):
                         zips.append(zip(xvec, x - i*scale))
                         
                     ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
-                             color='k', lw=2, clip_on=False, zorder=2)
+                             color='k', lw=1, clip_on=False, zorder=2)
                 
                 yticks.append(-i*scale)
                 yticklabels.append('ch. %i' % (i+1))
