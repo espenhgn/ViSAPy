@@ -20,14 +20,14 @@ from scipy.optimize import minimize
 
 plt.rcdefaults()
 plt.rcParams.update({
-    'xtick.labelsize' : 11,
+    'xtick.labelsize' : 8,
     'xtick.major.size': 5,
-    'ytick.labelsize' : 11,
+    'ytick.labelsize' : 8,
     'ytick.major.size': 5,
-    'font.size' : 15,
-    'axes.labelsize' : 15,
-    'axes.titlesize' : 15,
-    'legend.fontsize' : 14,
+    'font.size' : 8,
+    'axes.labelsize' : 8,
+    'axes.titlesize' : 8,
+    'legend.fontsize' : 8,
     'figure.subplot.wspace' : 0.4,
     'figure.subplot.hspace' : 0.4,
     'figure.subplot.left': 0.1,
@@ -270,8 +270,8 @@ class plotBenchmarkData(object):
 
                     
             try:
-                if len(cellindices) > 12:
-                    fig = self.plot_figure_12(num_units=12)
+                if len(cellindices) > 24:
+                    fig = self.plot_figure_12(num_units=24)
                 else:
                     fig = self.plot_figure_12(cellindices)
                 fig.savefig(os.path.join(self.savefolder, 'figure_12.pdf'),
@@ -1059,7 +1059,7 @@ class plotBenchmarkData(object):
         GS52 = GridSpec(5,6)
         GS53 = GridSpec(5,3)
         
-        def plotSpCells(self, cellindices=None, T=[500., 1000.], binsize=10.):
+        def plotSpCells(self, cellindices=None, T=[500., 1000.], binsize=10., cellinterval=1):
             '''plot histograms over which cells are used for input to
             the postsynaptic cells'''
             
@@ -1110,7 +1110,7 @@ class plotBenchmarkData(object):
             for i in cellindices:
                 xe = np.array([])
                 ye = np.array([])
-                spiketimes = dbE.select_neurons_interval(self.testdInst.SpCellsEx[i], T=T)
+                spiketimes = dbE.select_neurons_interval(self.testdInst.SpCellsEx[i][::cellinterval], T=T)
                 for times in spiketimes:
                     xe = np.r_[xe, times]
                     ye = np.r_[ye, np.zeros(times.size) - j]
@@ -1160,7 +1160,7 @@ class plotBenchmarkData(object):
             for i in cellindices:
                 xi = np.array([])
                 yi = np.array([])
-                spiketimes = dbI.select_neurons_interval(self.testdInst.SpCellsIn[i], T=T)
+                spiketimes = dbI.select_neurons_interval(self.testdInst.SpCellsIn[i][::cellinterval], T=T)
                 for times in spiketimes:
                     xi = np.r_[xi, times]
                     yi = np.r_[yi, np.zeros(times.size) - j]
@@ -1203,7 +1203,7 @@ class plotBenchmarkData(object):
             histEx = np.array([], dtype=int)
             for i in cellindices:
                 xe = np.array([])
-                spiketimes = dbE.select_neurons_interval(self.testdInst.SpCellsEx[i],
+                spiketimes = dbE.select_neurons_interval(self.testdInst.SpCellsEx[i][::cellinterval],
                                                          T=[self.TRANSIENT,
                                                             self.testdInst.networkInstance.simtime])
                 for times in spiketimes:
@@ -1260,7 +1260,7 @@ class plotBenchmarkData(object):
                 histIn = np.array([], dtype=int)
                 for i in cellindices:
                     xi = np.array([])
-                    spiketimes = dbI.select_neurons_interval(self.testdInst.SpCellsIn[i],
+                    spiketimes = dbI.select_neurons_interval(self.testdInst.SpCellsIn[i][::cellinterval],
                                                              T=[self.TRANSIENT,
                                                                 self.testdInst.networkInstance.simtime])
                     for times in spiketimes:
@@ -1589,7 +1589,7 @@ class plotBenchmarkData(object):
         
         
         
-        plotSpCells(self, T=[self.TRANSIENT, np.array([self.TRANSIENT, tstopms]).mean()])
+        plotSpCells(self, T=[self.TRANSIENT, np.array([self.TRANSIENT, tstopms]).mean()], cellinterval=20)
         plotSpikeTrains(self, cells, tstopms=tstopms)
         
         return fig
@@ -2212,7 +2212,7 @@ class plotBenchmarkData(object):
                 templates.append(sp_waves['data'][:, clust_idx==cellkey, :].mean(axis=1))
         templates = np.array(templates)
         
-        vlim = abs(templates).max()*2
+        vlim = abs(templates).max() #*2
         #vlim = abs(sp_waves['data']).max()
         scale = 2.**np.round(np.log2(vlim))
         tvec = sp_waves['time']
