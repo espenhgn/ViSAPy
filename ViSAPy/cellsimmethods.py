@@ -531,7 +531,7 @@ class BenchmarkData(object):
         Draw random cell body locations, assuming an electrode occupying a
         square cross section with width and depth defined by X,Y,Z.
         
-        killzone arg sets minumum distance to any contact size, presumably due
+        killzone arg sets minimum distance to any contact size, presumably due
         to 
         
         locations are drawn within a cylindric volume with radius and depths as
@@ -829,6 +829,10 @@ class BenchmarkData(object):
             f['srate'] = int(1000 / self.cellParameters['timeres_python'])
             f.create_dataset('data', data=lfp.T, compression=4)
             #f['data'] = lfp.T
+            grp = f.create_group('electrode')
+            grp['x'] = self.electrodeParameters['x']
+            grp['y'] = self.electrodeParameters['y']
+            grp['z'] = self.electrodeParameters['z']
             f.close()
             print 'save lfp ok'
             
@@ -850,10 +854,22 @@ class BenchmarkData(object):
             np.savetxt(self.savefolder + '/ViSAPy_somapos.gdf', pop_soma_pos)
             
             
+            # save the contact placements and additional parameters:
+            f = h5py.File(os.path.join(self.savefolder,
+                                       'electrodeParameters.h5'), 'w')
+            for key, value in self.electrodeParameters.items():
+                f[key] = value
+            f.close()
+
+            
             #saving lfp before filtering
             f = h5py.File(self.savefolder + '/ViSAPy_nonfiltered.h5', 'w')
             f['srate'] = int(1000 / self.cellParameters['timeres_python'])
             f.create_dataset('data', data=lfp.T, compression=4)
+            grp = f.create_group('electrode')
+            grp['x'] = self.electrodeParameters['x']
+            grp['y'] = self.electrodeParameters['y']
+            grp['z'] = self.electrodeParameters['z']
             f.close()
             print 'save noisy lfp ok'
     
@@ -866,6 +882,10 @@ class BenchmarkData(object):
                               '/ViSAPy_filterstep_%i.h5' % i, 'w')
                 f['srate'] = int(1000 / self.cellParameters['timeres_python'])
                 f.create_dataset('data', data=lfp.T, compression=4)
+                grp = f.create_group('electrode')
+                grp['x'] = self.electrodeParameters['x']
+                grp['y'] = self.electrodeParameters['y']
+                grp['z'] = self.electrodeParameters['z']
                 f.close()
                 print 'save lfp filter %i ok' % i
                 i += 1
