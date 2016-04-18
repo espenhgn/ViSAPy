@@ -17,7 +17,12 @@ if not os.environ.has_key('DISPLAY'):
     matplotlib.use('Agg')
 from scipy.signal import filtfilt, butter, lfilter
 from time import asctime, time
-import ViSAPy
+# import main ViSAPy classes used throughout this script. We also import
+# NEST even if it is not used in order to prevent spurious segmentation
+# errors that may otherwise occur when NEST is loaded with MPI and NEURON
+# at the same time. 
+import nest
+from ViSAPy import NoiseFeatures, CorrelatedNoise, ExternalNoiseRingNetwork, RingNetwork, BenchmarkDataRing, plotBenchmarkData
 import neuron
 from mpi4py import MPI
 
@@ -315,13 +320,16 @@ tic = time()
 ## Step 1:  Estimate PSD and covariance between channels, here using
 ##          an experimental dataset.
 ##          
-##          In the present ViSAPy, we should use only a single RANK for this
-##          and subsequent steps, we also skip regenerating noise and spike
-##          events, because it can take some time for long simulation durations
-##          
-if RANK == 0:
-    if not os.path.isfile(noise_output_file):
-        noise_features = ViSAPy.NoiseFeatures(**noiseFeaturesParameters)
+if not os.path.isfile(noise_output_file):
+    if RANK == 0:
+        noise_features = NoiseFeatures(**noiseFeaturesParameters)
+        psd = noise_features.psd
+        C = noise_features.C    
+    else:
+        psd = None
+        C = None
+    psd = COMM.bcast(psd, root=0)
+    C = COMM.bcast(C, root=0)    
 
 
 ################################################################################
@@ -330,38 +338,38 @@ if RANK == 0:
 ##          We choose to save directly to file, as it will be used in
 ##          later steps
 ##          
-        noise_generator = ViSAPy.CorrelatedNoise(psd=noise_features.psd,
-                                                 C=noise_features.C,
-                                                 amplitude_scaling=1.,
-                                                 **logBumpParameters)
-        #file object containing extracellular noise and related data
+    noise_generator = CorrelatedNoise(psd=psd,
+                                      C=C,
+                                      amplitude_scaling=1.,
+                                      savefolder=savefolder,
+                                      **logBumpParameters)
+    noise = noise_generator.correlated_noise(T = cellParameters['tstopms'])
+    #file object containing extracellular noise and related data
+    if RANK == 0:
         f = h5py.File(noise_output_file)
-        f['data'] = noise_generator.correlated_noise(T = cellParameters['tstopms'])
+        f['data'] = noise
 
 
 ################################################################################
 ## Step 3:  Create a rate expectation envelope lambda_t for generating
 ##          non-stationary Poisson spike trains
 ##          
-        #band-pass filter mean noise before non-stat Poisson generation
-        b, a = butter(N=2, Wn=np.array([1., 25.]) / nyquist, btype='pass')
-        #compute lambda function, use signal averaged over space. It will be
-        #normalized by the ViSAPy.NonStationaryPoisson instance later.
-        lambda_t = filtfilt(b, a, f['data'].value.mean(axis=0))
+    #band-pass filter mean noise before non-stat Poisson generation
+    b, a = butter(N=2, Wn=np.array([1., 25.]) / nyquist, btype='pass')
+    #compute lambda function, use signal averaged over space. It will be
+    #normalized by the ViSAPy.NonStationaryPoisson instance later.
+    lambda_t = filtfilt(b, a, noise.mean(axis=0))
+    if RANK == 0:
         f['lambda_t'] = lambda_t
         f.close()
-    else:
-        #file exists, so we make some attempts at loading the non-stationarity
-        f = h5py.File(noise_output_file)
-        lambda_t = f['lambda_t'].value
-        f.close()
 else:
-    lambda_t = None
-
-#communicate rate envelope across ranks
-lambda_t = COMM.bcast(lambda_t, root=0)
+    #file exists, so we make some attempts at loading the non-stationarity
+    f = h5py.File(noise_output_file)
+    lambda_t = f['lambda_t'].value
+    f.close()
 
 noise_time = time() - tic
+COMM.Barrier()
 
 ################################################################################
 ## Step 4:  Run network simulation, generating a pool of synaptic activation
@@ -375,7 +383,7 @@ tic = time()
 if not os.path.isfile(os.path.join(savefolder, 'SpTimesEx.db')) \
     and not os.path.isfile(os.path.join(savefolder, 'SpTimesIn.db')):
     #create an instance of our network
-    networkInstance = ViSAPy.ExternalNoiseRingNetwork(lambda_t=lambda_t,
+    networkInstance = ExternalNoiseRingNetwork(lambda_t=lambda_t,
                                 **{k : v for k, v in networkParameters.items() +
                                    ExternalNoiseRingNetworkParameters.items()})
     networkInstance.run()
@@ -383,7 +391,7 @@ if not os.path.isfile(os.path.join(savefolder, 'SpTimesEx.db')) \
     networkInstance.process_gdf_files()
 else:
     #create instance of parent RingNetwork 
-    networkInstance = ViSAPy.RingNetwork(**networkParameters)
+    networkInstance = RingNetwork(**networkParameters)
 
 network_time = time() - tic
 
@@ -401,7 +409,7 @@ tic = time()
 np.random.seed(POPULATIONSEED)
 
 #Create BenchmarkData object
-benchmark_data = ViSAPy.BenchmarkDataRing(
+benchmark_data = BenchmarkDataRing(
     cellParameters = cellParameters,
     morphologies = morphologies,
     templatefiles = templatefiles,
@@ -435,7 +443,7 @@ tic = time()
     
 #utilize plot methods provided by class plotBenchmarkData. We are
 #removing a startup transient of 500 ms. 
-myplot = ViSAPy.plotBenchmarkData(benchmark_data, TRANSIENT=500.)
+myplot = plotBenchmarkData(benchmark_data, TRANSIENT=500.)
 myplot.run()
 
 plot_time = time() - tic
