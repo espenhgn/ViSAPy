@@ -288,7 +288,8 @@ class BenchmarkData(object):
             
             print 'SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
-                        f['LFP'].value.min(), f['LFP'].value.max())
+                        f['LFP'].value.min() if 'LFP' in f.keys() else f['electrode000'].value.min(),
+                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max())
             
             f.close()
             
@@ -696,14 +697,19 @@ class BenchmarkData(object):
             
             f = h5py.File(os.path.join(self.savefolder,
                                             self.default_h5_file) % \
-                                        (cellindex), 'r')
+                                        (cellindex), 'r+')
             print(os.path.join(self.savefolder,
                                self.default_h5_file) % (cellindex))
             for k in f.iterkeys():
-                if k == 'LFP':
+                if k in ['LFP', 'electrode000']:
                     setattr(cells[cellindex], 'LFP', f[k])
                 else:
                     setattr(cells[cellindex], k, f[k].value)
+                    try:
+                        assert(hasattr(cells[cellindex], k))
+                    except AssertionError as ae:
+                        raise ae('cell {} do not have attribute {}'.format(cellindex, k))
+
             #attach file object
             setattr(cells[cellindex], 'f', f)
             
@@ -712,6 +718,7 @@ class BenchmarkData(object):
         #recalculate AP_trains:
         for cell in cells.itervalues():
             setattr(cell, 'AP_train', self.return_spiketrains(cell.somav))
+                
         
         return cells    
 
@@ -1193,11 +1200,16 @@ class BenchmarkDataLayer(BenchmarkData):
             #access file object
             f = h5py.File(os.path.join(self.savefolder,
                                 self.default_h5_file) % (cellindex),
-                          compression='gzip')
+                          compression='gzip', mode='r+')
             
             if self.simulationParameters.has_key('to_file'):
                 if self.simulationParameters['to_file']:
                     f['LFP'] = f['electrode000']
+                    del f['electrode000']
+                    try:
+                        assert('LFP' in f.keys())
+                    except AssertionError as ae:
+                        raise ae('LFP dataset not found in {}'.format(f))
 
             #save stuff from savelist
             for attrbt in self.savelist:
@@ -1210,14 +1222,15 @@ class BenchmarkDataLayer(BenchmarkData):
                 except:
                     try:
                         f[attrbt] = str(getattr(cell, attrbt))
-                    except:
+                    except AttributeError:
                         import warnings
-                        warnings.warn('Could not find %s in cell') % attrbt
+                        warnings.warn('Could not find %s in cell' % attrbt)
 
             #print some stuff
             print 'SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
-                        f['LFP'].value.min(), f['LFP'].value.max())
+                        f['LFP'].value.min() if 'LFP' in f.keys() else f['electrode000'].value.min(),
+                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max())
 
             f.close()
             
