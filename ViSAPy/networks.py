@@ -793,6 +793,7 @@ class RingNetwork(Network):
     '''
     def __init__(self,
                 N = 2500,
+                epsilon = 0.1,
                 theta = 20.,
                 tauMem = 20.,
                 delay = 2.,
@@ -819,6 +820,8 @@ class RingNetwork(Network):
         ::
             
             N : int, full network size, inhibitory population size is N/5
+            epsilon : mask width parameter, where the mask width of the
+                network connectivity will be set as int(epsilon*N)
             theta : float, spike threshold in mV
             tauMem : float, membrane time constant in ms
             delay : float, mean connection delay in network in ms
@@ -840,9 +843,10 @@ class RingNetwork(Network):
         
         #set some attributes
         self.N          =  N
+        self.epsilon    =  epsilon
         self.NE         =  int(0.8*self.N)
         self.NI         =  self.N-self.NE
-        self.K          =  int(0.05*self.N)
+        self.K          =  int(epsilon/2*self.N)
         self.theta      =  theta
         self.tauMem     =  tauMem
         self.delay      =  delay
