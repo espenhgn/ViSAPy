@@ -125,7 +125,10 @@ class Network(object):
             nest.SetKernelStatus({
                 "resolution": self.dt,
             })
-            
+        
+        #assign one MPI process to record spike events across all RANKs
+        if SIZE > 1:
+            nest.SetNumRecProcesses(1)
         
         #set defaults for spike detektor mechanism
         nest.SetDefaults("spike_detector",
@@ -219,23 +222,19 @@ class Network(object):
         #gather data
         num_synapses_ex = nest.GetDefaults("excitatory")["num_connections"]
         num_synapses_in = nest.GetDefaults("inhibitory")["num_connections"]
-        eevents = nest.GetStatus(self.espikes, "n_events")[0]
-        ievents = nest.GetStatus(self.ispikes, "n_events")[0]
-        erate   = eevents / self.simtime * 1000. / self.NE
-        irate   = ievents / self.simtime * 1000. / self.NI
-        
-        #calculate proper network rates on RANK 0
-        if RANK == 0:
-            for i in range(1, SIZE):
-                erate += COMM.recv(source=MPI.ANY_SOURCE)
+        if RANK == SIZE - 1:
+            # spikes only exist on the last RANK with nest.SetNumRecProcesses(1)
+            eevents = nest.GetStatus(self.espikes, "n_events")[0]
+            ievents = nest.GetStatus(self.ispikes, "n_events")[0]
+            erate   = float(eevents) / self.simtime * 1000. / self.NE
+            irate   = float(ievents) / self.simtime * 1000. / self.NI
         else:
-            COMM.send(erate, dest=0)
-        
-        if RANK == 0:
-            for i in range(1, SIZE):
-                irate += COMM.recv(source=MPI.ANY_SOURCE)
-        else:
-            COMM.send(irate, dest=0)
+            erate = None
+            irate = None
+
+        #broadcast network rates to all RANKs
+        erate = COMM.bcast(erate, root=SIZE - 1)
+        irate = COMM.bcast(irate, root=SIZE - 1)
 
         #print out statistics
         if RANK == 0:
@@ -594,24 +593,21 @@ class StationaryPoissonNetwork(Network):
         
         This method takes no keyword arguments
         '''
-        #gather results on this RANK
-        eevents = nest.GetStatus(self.espikes, "n_events")[0]
-        ievents = nest.GetStatus(self.ispikes, "n_events")[0]
-        erate   = eevents / self.simtime * 1000. / self.NE
-        irate   = ievents / self.simtime * 1000. / self.NI
         
-        #calculate proper network rates on RANK 0
-        if RANK == 0:
-            for i in range(1, SIZE):
-                erate += COMM.recv(source=MPI.ANY_SOURCE)
+        #gather data
+        if RANK == SIZE - 1:
+            # spikes only exist on the last RANK with nest.SetNumRecProcesses(1)
+            eevents = nest.GetStatus(self.espikes, "n_events")[0]
+            ievents = nest.GetStatus(self.ispikes, "n_events")[0]
+            erate   = float(eevents) / self.simtime * 1000. / self.NE
+            irate   = float(ievents) / self.simtime * 1000. / self.NI
         else:
-            COMM.send(erate, dest=0)
-        
-        if RANK == 0:
-            for i in range(1, SIZE):
-                irate += COMM.recv(source=MPI.ANY_SOURCE)
-        else:
-            COMM.send(irate, dest=0)
+            erate = None
+            irate = None
+
+        #broadcast network rates to all RANKs
+        erate = COMM.bcast(erate, root=SIZE - 1)
+        irate = COMM.bcast(irate, root=SIZE - 1)
 
         if RANK == 0:
             print "Excitatory rate       : %.2f Hz" % erate

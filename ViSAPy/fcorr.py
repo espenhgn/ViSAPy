@@ -474,7 +474,7 @@ class NoiseFeatures(LogBumpFilterBank):
 
 class CorrelatedNoise(LogBumpFilterBank):
     '''class CorrelatedNoise, inherits class NoiseFeatures'''
-    def __init__(self, psd, C, amplitude_scaling=1., savefolder='savefolder', **kwargs):
+    def __init__(self, psd, C, amplitude_scaling=1., savefolder='savefolder', SEED=12345678, **kwargs):
         '''
         Initialization of class CorrelatedNoise, inherits class NoiseFeatures.
         Provide methods for generating 
@@ -486,6 +486,7 @@ class CorrelatedNoise(LogBumpFilterBank):
             C : np.ndarray, shape (nbumps, nchannels, bchannels), covariance
                 between channels in each nbumps frequency band
             amplitude_scaling : float, final output scale factor
+            SEED : int
             **kwargs : see class LogBumpFilterBank
         
         '''
@@ -497,6 +498,7 @@ class CorrelatedNoise(LogBumpFilterBank):
         self.C = C
         self.amplitude_scaling = amplitude_scaling
         self.savefolder = savefolder
+        self.SEED = SEED
         
 
     def filter(self, data):
@@ -528,6 +530,9 @@ class CorrelatedNoise(LogBumpFilterBank):
         
         f_.close()
         
+        # allow all file writes to finish
+        COMM.Barrier()
+        
         if RANK == 0:
             f = h5py.File(os.path.join(self.savefolder, 'tmpnoise.h5'), 'w')
             f['data'] = np.zeros((self.n,) + data.shape)
@@ -542,12 +547,17 @@ class CorrelatedNoise(LogBumpFilterBank):
             fdata = f['data'].value
             f.close()
         
-        # remove temporary files
-        for j in range(SIZE):
-            if RANK == 0:
-                os.system('rm {}'.format(os.path.join(self.savefolder,
-                                                      'tmpnoise_rank{}.h5'.format(j))))
-        
+            # remove temporary files
+            for j in range(SIZE):
+                fname = os.path.join(self.savefolder,
+                                     'tmpnoise_rank{}.h5'.format(j))
+                try:
+                    assert os.path.isfile(fname)
+                except AssertionError as ae:
+                    raise ae, '{} not found!'.format(fname)
+                while os.path.isfile(fname):
+                    os.system('rm {}'.format(fname))
+                                             
         COMM.Barrier()
     
 
@@ -621,7 +631,7 @@ class CorrelatedNoise(LogBumpFilterBank):
         
         #get state of random number generation, set unique seed per RANK
         state = np.random.get_state()
-        np.random.seed(123456+RANK)
+        np.random.seed(self.SEED+RANK)
         
         
         #deal with each channel independently
