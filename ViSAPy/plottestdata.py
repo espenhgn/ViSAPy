@@ -270,8 +270,8 @@ class plotBenchmarkData(object):
 
                     
             try:
-                if len(cellindices) > 24:
-                    fig = self.plot_figure_12(num_units=24)
+                if len(cellindices) > 32:
+                    fig = self.plot_figure_12(num_units=32)
                 else:
                     fig = self.plot_figure_12(cellindices)
                 fig.savefig(os.path.join(self.savefolder, 'figure_12.pdf'),
@@ -2081,17 +2081,17 @@ class plotBenchmarkData(object):
                               tstopms / self.testdInst.cellParameters['timeres_python'] + 1,
                               dtype=int)
             tvec = tinds * self.testdInst.cellParameters['timeres_python']
-            ax.plot(tvec, cell.somav[tinds] - i*100,
+            ax.plot(tvec, cell.somav[tinds].astype(float) - i*100,
                 color = self.colors[cellkey],
                 alpha = self.alphas[cellkey],
                 lw=2,
                 label = 'cell %i' % (cellkey+1), rasterized=True)
 
             yticklabels.append('cell %i' % (cellkey+1))
-            yticks.append(cell.somav[tinds].mean() -i*100)
+            yticks.append(cell.somav[tinds].astype(float).mean() -i*100)
             
             if show_rates:
-                ax.text(tvec[-1]+30, cell.somav[tinds].mean()-i*100,
+                ax.text(tvec[-1]+30, cell.somav[tinds].astype(float).mean()-i*100,
                         '%.1f' % (cell.AP_train[tinds[0]:].sum() *1000. / cell.tstopms),
                         va='bottom', ha='left', fontsize=smallfontsize)
         
@@ -2187,12 +2187,14 @@ class plotBenchmarkData(object):
     
     def plot_figure_12(self, cellindices=None, num_units=None):
         '''plot spike waveforms'''
-        
-        fig = plt.figure(figsize=(10, 7))
-        fig.subplots_adjust(left=0.06, right=0.96, bottom=0.07, top=0.92, wspace=0.2)
-        
+
         if cellindices is None:
             cellindices = np.arange(self.testdInst.POPULATION_SIZE)
+
+        
+        fig = plt.figure(figsize=(10*cellindices.size/16., 7))
+        fig.subplots_adjust(left=0.06, right=0.96, bottom=0.07, top=0.92, wspace=0.2)
+        
     
         #with many cells this is a bit cramped, plot only
         #num_units randomly chosen units, sorted  
