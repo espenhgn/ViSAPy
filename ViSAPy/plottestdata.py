@@ -2188,11 +2188,11 @@ class plotBenchmarkData(object):
     def plot_figure_12(self, cellindices=None, num_units=None):
         '''plot spike waveforms'''
         
-        fig = plt.figure(figsize=(10, 7))
-        fig.subplots_adjust(left=0.06, right=0.96, bottom=0.07, top=0.92, wspace=0.2)
-        
         if cellindices is None:
             cellindices = np.arange(self.testdInst.POPULATION_SIZE)
+
+        fig = plt.figure(figsize=(10*cellindices.size/16, 7))
+        fig.subplots_adjust(left=0.06, right=0.96, bottom=0.07, top=0.92, wspace=0.2)
     
         #with many cells this is a bit cramped, plot only
         #num_units randomly chosen units, sorted  
