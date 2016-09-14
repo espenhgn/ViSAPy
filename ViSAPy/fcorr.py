@@ -526,7 +526,7 @@ class CorrelatedNoise(LogBumpFilterBank):
             if i % SIZE == RANK:
                 print '.',
                 f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
-                f_[str(i)] = np.r_[f[pad:], trans[:pad]]
+                f_[str(i)] = np.r_[f[pad:], trans[:pad]].astype('float32')
         
         f_.close()
         
@@ -535,28 +535,30 @@ class CorrelatedNoise(LogBumpFilterBank):
         
         if RANK == 0:
             f = h5py.File(os.path.join(self.savefolder, 'tmpnoise.h5'), 'w')
-            f['data'] = np.zeros((self.n,) + data.shape)
+            f['data'] = np.zeros((self.n,) + data.shape, dtype='float32')
             for j in range(SIZE):
                 f_ = h5py.File(os.path.join(self.savefolder,
                                             'tmpnoise_rank{}.h5'.format(j)),
                                'r')
                 for i in range(self.n):
                     if i % SIZE == j:
-                        f['data'][i, ] += f_[str(i)]
+                        f['data'][i, ] += f_[str(i)] #.astype('float32')
                 f_.close()
-            fdata = f['data'].value
             f.close()
-        
-            # remove temporary files
+            
+            print('finished writing {}'.format(os.path.join(self.savefolder,
+                                                            'tmpnoise.h5')))
+            
+            
+            # remove temporary pink noise files
             for j in range(SIZE):
                 fname = os.path.join(self.savefolder,
                                      'tmpnoise_rank{}.h5'.format(j))
+                print('deleting {}'.format(fname))
                 try:
-                    assert os.path.isfile(fname)
-                except AssertionError as ae:
-                    raise ae, '{} not found!'.format(fname)
-                while os.path.isfile(fname):
-                    os.system('rm {}'.format(fname))
+                    os.remove(fname)
+                except OSError, e:  ## if failed, report it back to the user ##
+                    print("Error: {} - {}.".format(e.filename, e.strerror))
                                              
         COMM.Barrier()
     
@@ -582,19 +584,22 @@ class CorrelatedNoise(LogBumpFilterBank):
 
         if RANK == 0:
             f = h5py.File(os.path.join(self.savefolder, 'tmpnoise.h5'), 'r')
-            DATA = np.zeros(f['data'][0, ].shape)
+            DATA = np.zeros(f['data'][0, ].shape, dtype='float32')
             for i in range(self.n):
                 sqrtC = np.linalg.cholesky(self.C[i])
                 data = f['data'][i, ]
                 data -= data.mean(axis=0)
                 data /= data.std(axis=0)
                 data = np.dot(sqrtC, data.T).T
-                DATA += data
+                DATA += data.astype('float32')
             
             f.close()
             # remove temporary file
-            os.system('rm {}'.format(os.path.join(self.savefolder,
-                                                  'tmpnoise.h5')))
+            print('removing temporary file {}'.format(os.path.join(self.savefolder, 'tmpnoise.h5')))
+            try:
+                os.remove(os.path.join(self.savefolder, 'tmpnoise.h5'))
+            except OSError, e:
+                print("Error: {} - {}.".format(e.filename, e.strerror))
             DATA = DATA.T
             DATA *= self.amplitude_scaling
             DATA = DATA.astype('float32')
@@ -627,7 +632,7 @@ class CorrelatedNoise(LogBumpFilterBank):
         #temporary work with dimensions in base 2**12, much faster ifft
         rowsfft = 2**12 * (divmod(rows, 2**12)[0]+1)
         
-        data = np.zeros((rows, cols))
+        data = np.zeros((rows, cols), dtype='float32')
         
         #get state of random number generation, set unique seed per RANK
         state = np.random.get_state()
@@ -665,7 +670,7 @@ class CorrelatedNoise(LogBumpFilterBank):
         np.random.set_state(state)
         
         #sum arrays
-        DATA = np.zeros(data.shape)
+        DATA = np.zeros(data.shape, dtype='float32')
         COMM.Allreduce(data, DATA)        
         return DATA
 
