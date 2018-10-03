@@ -1012,7 +1012,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
     '''
     def __init__(self,
                  lambda_t,
-                 tstopms=1000.,
+                 tstop=1000.,
                  invertnoise_ex=True,
                  invertnoise_in=False,
                  rate=20.,
@@ -1040,11 +1040,11 @@ class ExternalNoiseRingNetwork(RingNetwork):
         Keyword arguments:
         ::
             
-            lambda_t : np.ndarray, length (tstopms*dt+1) vector representing
+            lambda_t : np.ndarray, length (tstop*dt+1) vector representing
                 rate expectation for non-stationary Poisson generator, e.g.,
                 generated using
-                ViSAPy.CorrelatedNoise.correlated_noise(T=tstopms).mean(axis=0)
-            tstopms : float, end of LFPy.Cell simulations
+                ViSAPy.CorrelatedNoise.correlated_noise(T=tstop).mean(axis=0)
+            tstop : float, end of LFPy.Cell simulations
             invertnoise_ex : bool, revert sign of mean noise for generating
                 nonstationary input to excitatory population
             invertnoise_in : bool, revert sign of mean noise for generating
@@ -1063,7 +1063,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
         
         #set some attributes
         self.lambda_t = lambda_t
-        self.tstopms = tstopms
+        self.tstop = tstop
         self.invertnoise_ex = invertnoise_ex
         self.invertnoise_in = invertnoise_in
         self.rate = rate
@@ -1186,7 +1186,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
     #                            
     #            
     #            #time vector, save only stuff t >= 0 
-    #            tvec = np.arange(0, self.tstopms + self.dt, self.dt)
+    #            tvec = np.arange(0, self.tstop + self.dt, self.dt)
     #            
     #            #save noise so that it can be superimposed onto LFP later
     #            f = h5py.File(os.path.join(self.savefolder,

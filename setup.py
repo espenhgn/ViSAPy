@@ -5,10 +5,10 @@ if version < '2.2.3':
     from distutils.dist import DistributionMetadata
     DistributionMetadata.classifiers = None
     DistributionMetadata.download_url = None
-    
-    
-from distutils.core import setup
-from distutils.extension import Extension
+try:
+    from setuptools import setup, Extension
+except ImportError as ie:
+    raise ie('please install setuptools')
 from Cython.Distutils import build_ext
 import numpy
 
@@ -20,7 +20,7 @@ setup(
     name = 'ViSAPy',
     version = '1.0',
     maintainer = 'Espen Hagen',
-    maintainer_email = 'ehagen@fz-juelich.de',
+    maintainer_email = 'espehage@fys.uio.no',
     url = 'https://www.github.com/espenhgn/ViSAPy',
     packages = ['ViSAPy'],
     provides = ['ViSAPy'],

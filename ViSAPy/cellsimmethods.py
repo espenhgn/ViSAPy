@@ -36,10 +36,9 @@ class BenchmarkData(object):
                         'v_init' : -80,
                         'passive' : False,
                         'nsegs_method' : None,
-                        'timeres_NEURON' : 2**-5,
-                        'timeres_python' : 2**-5,
-                        'tstartms' : 0.,
-                        'tstopms' : 1000.,
+                        'dt' : 2**-5,
+                        'tstart' : 0.,
+                        'tstop' : 1000.,
                         'verbose' : False,
                     },
                  morphologies=[],
@@ -162,8 +161,7 @@ class BenchmarkData(object):
         #certain LFPy.TemplateCell attributes being stored for each instance
         self.savelist = [
             'somav',
-            'timeres_NEURON',
-            'timeres_python',
+            'dt',
             'somapos',
             'x',
             'y',
@@ -267,7 +265,7 @@ class BenchmarkData(object):
             #access file object
             f = h5py.File(os.path.join(self.savefolder,
                                 self.default_h5_file) % (cellindex),
-                          'a', compression='gzip')
+                          'a')
             
             if self.simulationParameters.has_key('to_file'):
                 if self.simulationParameters['to_file']:
@@ -405,7 +403,7 @@ class BenchmarkData(object):
         u = np.where((v[:-1] < v_t) & (v[1:] >= v_t))[0]
 
         #mask spikes occurring prior to TRANSIENT
-        u = u[u >= int(TRANSIENT / self.cellParameters['timeres_python'])]
+        u = u[u >= int(TRANSIENT / self.cellParameters['dt'])]
         
         
         pre = -int(self.TEMPLATELEN * self.TEMPLATEOFFS)
@@ -465,7 +463,7 @@ class BenchmarkData(object):
         ::
             
             list of dictionaries on the form
-            [{'xpos' : x[i], 'ypos' : y[i], 'zpos' : z[i]}, ...]
+            [{'x' : x[i], 'y' : y[i], 'z' : z[i]}, ...]
             containing randomized x,y,z-coordinates of each cell body
         '''
         min_cell_interdist = self.populationParameters['min_cell_interdist']
@@ -522,7 +520,7 @@ class BenchmarkData(object):
     
         soma_pos = []
         for i in range(self.POPULATION_SIZE):
-            soma_pos.append({'xpos' : x[i], 'ypos' : y[i], 'zpos' : z[i]})
+            soma_pos.append({'x' : x[i], 'y' : y[i], 'z' : z[i]})
         
         return soma_pos
     
@@ -544,7 +542,7 @@ class BenchmarkData(object):
         ::
             
             list of dictionaries on the form
-            [{'xpos' : x[i], 'ypos' : y[i], 'zpos' : z[i]}, ...]
+            [{'x' : x[i], 'y' : y[i], 'z' : z[i]}, ...]
             containing randomized x,y,z-coordinates of each cell body
             
         '''
@@ -611,7 +609,7 @@ class BenchmarkData(object):
             
         soma_pos = []
         for i in range(self.POPULATION_SIZE):
-            soma_pos.append({'xpos' : x[i], 'ypos' : y[i], 'zpos' : z[i]})
+            soma_pos.append({'x' : x[i], 'y' : y[i], 'z' : z[i]})
     
         return soma_pos
     
@@ -827,13 +825,13 @@ class BenchmarkData(object):
             f = h5py.File(self.savefolder + '/ViSAPy_somatraces.h5', 'w')
             f.create_dataset('data', data=somavs, compression=4)
             #f['data'] = somavs
-            f['srate'] = int(1000 / self.cellParameters['timeres_python'])
+            f['srate'] = int(1000 / self.cellParameters['dt'])
             f.close()
             print 'save somatraces ok'
             
             #saving
             f = h5py.File(self.savefolder + '/ViSAPy_noiseless.h5', 'w')
-            f['srate'] = int(1000 / self.cellParameters['timeres_python'])
+            f['srate'] = int(1000 / self.cellParameters['dt'])
             f.create_dataset('data', data=lfp.T, compression=4)
             #f['data'] = lfp.T
             grp = f.create_group('electrode')
@@ -854,7 +852,7 @@ class BenchmarkData(object):
             
             #save the somatic placements:
             pop_soma_pos = np.zeros((self.POPULATION_SIZE, 3))
-            keys = ['xpos', 'ypos', 'zpos']
+            keys = ['x', 'y', 'z']
             for i in range(self.POPULATION_SIZE):
                 for j in range(3):
                     pop_soma_pos[i, j] = self.pop_soma_pos[i][keys[j]]
@@ -871,7 +869,7 @@ class BenchmarkData(object):
             
             #saving lfp before filtering
             f = h5py.File(self.savefolder + '/ViSAPy_nonfiltered.h5', 'w')
-            f['srate'] = int(1000 / self.cellParameters['timeres_python'])
+            f['srate'] = int(1000 / self.cellParameters['dt'])
             f.create_dataset('data', data=lfp.T, compression=4)
             grp = f.create_group('electrode')
             grp['x'] = self.electrodeParameters['x']
@@ -887,7 +885,7 @@ class BenchmarkData(object):
                                               lfp).astype('float32')
                 f = h5py.File(self.savefolder +
                               '/ViSAPy_filterstep_%i.h5' % i, 'w')
-                f['srate'] = int(1000 / self.cellParameters['timeres_python'])
+                f['srate'] = int(1000 / self.cellParameters['dt'])
                 f.create_dataset('data', data=lfp.T, compression=4)
                 grp = f.create_group('electrode')
                 grp['x'] = self.electrodeParameters['x']
@@ -1132,16 +1130,16 @@ class BenchmarkDataLayer(BenchmarkData):
             if self.driftParameters is not None:
                 #set up a 3D array dotprodcoeffs incorporating electrode drift
                 #at fixed intervals
-                driftCount = int(divmod(self.cellParameters['tstopms'],
+                driftCount = int(divmod(self.cellParameters['tstop'],
                                         self.driftParameters['driftInterval'
                                                              ])[0])
-                #in case driftInterval > tstopms:
+                #in case driftInterval > tstop:
                 if driftCount == 0:
                     driftCount += 1
                 dotprodcoeffs = []
                 #dummy-membrane currents and tvec:
                 cell.imem = np.eye(cell.totnsegs)
-                cell.tvec = np.arange(cell.totnsegs)*cell.timeres_python
+                cell.tvec = np.arange(cell.totnsegs)*cell.dt
                 print 'calculating dot-prod coefficients',
                 for i in range(driftCount):
                     elParameters = self.electrodeParameters.copy()
@@ -1200,7 +1198,7 @@ class BenchmarkDataLayer(BenchmarkData):
             #access file object
             f = h5py.File(os.path.join(self.savefolder,
                                 self.default_h5_file) % (cellindex),
-                          compression='gzip', mode='r+')
+                          mode='r+')
             
             if self.simulationParameters.has_key('to_file'):
                 if self.simulationParameters['to_file']:
@@ -1287,7 +1285,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 # Create synapse(s) and setting times using class LFPy.Synapse
                 synapse = LFPy.Synapse(cell, **synparams)
                 synspikes.sort()
-                synapse.set_spike_times(synspikes + cell.tstartms)
+                synapse.set_spike_times(synspikes + cell.tstart)
         
         
     def point_axon_down(self, cell):

@@ -297,7 +297,7 @@ class plotBenchmarkData(object):
 
 
 
-    def plot_figure_02(self, cells=None, tstopms=1500.):
+    def plot_figure_02(self, cells=None, tstop=1500.):
 
         def schemPyr(cell, scale=1.):
             '''
@@ -371,13 +371,13 @@ class plotBenchmarkData(object):
             cells = self.testdInst.read_lfp_cell_files()
         
         #load 1 s of recording
-        if self.testdInst.cellParameters['tstopms'] < tstopms:
-            tstopms = self.testdInst.cellParameters['tstopms']
+        if self.testdInst.cellParameters['tstop'] < tstop:
+            tstop = self.testdInst.cellParameters['tstop']
 
-        tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['timeres_python'],
-                          tstopms / self.testdInst.cellParameters['timeres_python'] + 1,
+        tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['dt'],
+                          tstop / self.testdInst.cellParameters['dt'] + 1,
                           dtype=int)
-        tvec = tinds * self.testdInst.cellParameters['timeres_python']
+        tvec = tinds * self.testdInst.cellParameters['dt']
 
         
         #get some traces
@@ -393,7 +393,7 @@ class plotBenchmarkData(object):
         
         
         ##load nest spike times
-        T = [self.TRANSIENT, tstopms]       
+        T = [self.TRANSIENT, tstop]       
         
         #scale ybar
         vlim = abs(lfp_noisy).max()
@@ -718,7 +718,7 @@ class plotBenchmarkData(object):
         ax7.yaxis.set_ticks_position('left')
         ax7.set_yticks(yticks)
         ax7.set_yticklabels(yticklabels)
-        ax7.set_xlim(self.TRANSIENT, tstopms)
+        ax7.set_xlim(self.TRANSIENT, tstop)
         axis = ax7.axis(ax7.axis('tight'))
         ax7.xaxis.set_major_locator(plt.MaxNLocator(2))
         ax7.plot([tvec[-1], tvec[-1]], [axis[2], axis[2]+scale],
@@ -768,7 +768,7 @@ class plotBenchmarkData(object):
         ax8.set_xlabel(r'$t$ (ms)', labelpad=0.1)
         ax8.set_yticks(yticks)
         ax8.set_yticklabels(yticklabels)
-        ax8.set_xlim(self.TRANSIENT, tstopms)
+        ax8.set_xlim(self.TRANSIENT, tstop)
         ax8.xaxis.set_major_locator(plt.MaxNLocator(2))
         ax8.set_ylim(yticks[-1]-0.5, 1)          
         
@@ -821,15 +821,15 @@ class plotBenchmarkData(object):
         yticks = []
         yticklabels = []
         data = f['input_data'].value.T
-        tvec = np.arange(data.shape[1]) * self.testdInst.cellParameters['timeres_python']
+        tvec = np.arange(data.shape[1]) * self.testdInst.cellParameters['dt']
         #slice data and tvec and noise:
         if tvec[-1] > T[1]:
             data = data[:, (tvec <= T[1]) & (tvec >= T[0])]
             tvec = tvec[(tvec <= T[1]) & (tvec >= T[0])]
             
         tvec_noise = np.arange(f['data'].value.shape[1]) * \
-                    self.testdInst.cellParameters['timeres_python'] +\
-                    self.testdInst.cellParameters['tstartms']
+                    self.testdInst.cellParameters['dt'] +\
+                    self.testdInst.cellParameters['tstart']
         noise = f['data'].value[:, (tvec_noise <= T[1]) & (tvec_noise >= T[0])]
         
         
@@ -875,8 +875,8 @@ class plotBenchmarkData(object):
         ax.set_rasterization_zorder(1)
         psd = f['psd'].value.mean(axis=1)
         ax.loglog(f['freqs'].value[1:2**15] * 1000 /
-                  self.testdInst.cellParameters['timeres_python'],
-                  psd[1:2**15]/np.sqrt(f['NFFT'].value / self.testdInst.cellParameters['timeres_python']),
+                  self.testdInst.cellParameters['dt'],
+                  psd[1:2**15]/np.sqrt(f['NFFT'].value / self.testdInst.cellParameters['dt']),
                   color='k',
                   zorder=0,
                   rasterized=True,
@@ -904,7 +904,7 @@ class plotBenchmarkData(object):
         ax = fig.add_axes([0.07, 0.35, 0.175, 0.125])
         ax.set_rasterization_zorder(1)
 
-        basist = 1000 / (2 * self.testdInst.cellParameters['timeres_python'])
+        basist = 1000 / (2 * self.testdInst.cellParameters['dt'])
         #from logbumps import logbumps
         logbases = fcorr.logbumps(n=f['C'].shape[0], t=basist,
                         normalize=False, alpha=f['alpha'].value, debug=False,
@@ -1010,7 +1010,7 @@ class plotBenchmarkData(object):
         yticks = []
         yticklabels = []
         data = noise
-        tvec = np.arange(data.shape[1]) * self.testdInst.cellParameters['timeres_python']
+        tvec = np.arange(data.shape[1]) * self.testdInst.cellParameters['dt']
         zips = []
         for i, trace in enumerate(data):
             zips.append(zip(tvec, trace - i*scale))
@@ -1050,7 +1050,7 @@ class plotBenchmarkData(object):
         return fig
         
 
-    def plot_figure_08(self, cells, tstopms=1500.):
+    def plot_figure_08(self, cells, tstop=1500.):
     
         fig = plt.figure(figsize=(10, 12))
         fig.subplots_adjust(left=0.06, right=0.9, bottom=0.04, top=0.975, wspace=0.8, hspace=0.40)
@@ -1347,7 +1347,7 @@ class plotBenchmarkData(object):
         def plotSpikeTrains(self, cells,
                             bins=10**np.linspace(np.log10(1), np.log10(1E3), 100),
                             binwidth=10, maxlagms = 100, show_rates=True,
-                            tstopms = 1500.):
+                            tstop = 1500.):
             '''
             gather action potentials from all cells, and plot spike trains
             '''        
@@ -1357,10 +1357,10 @@ class plotBenchmarkData(object):
             yticks = []
             i = 0
             for cellkey, cell in cells.iteritems():
-                tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['timeres_python'],
-                                  tstopms / self.testdInst.cellParameters['timeres_python'] + 1,
+                tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['dt'],
+                                  tstop / self.testdInst.cellParameters['dt'] + 1,
                                   dtype=int)
-                tvec = tinds * self.testdInst.cellParameters['timeres_python']
+                tvec = tinds * self.testdInst.cellParameters['dt']
                 ax.plot(tvec, cell.somav[tinds] - i*100,
                     color = self.colors[cellkey],
                     alpha = self.alphas[cellkey],
@@ -1382,7 +1382,7 @@ class plotBenchmarkData(object):
             ax.set_yticks(yticks)
             ax.set_yticklabels(yticklabels)
             
-            ax.set_xlim(self.TRANSIENT, tstopms)
+            ax.set_xlim(self.TRANSIENT, tstop)
             
             ax.axis(ax.axis('tight'))
             axis = ax.axis()
@@ -1428,7 +1428,7 @@ class plotBenchmarkData(object):
         
                 if show_rates:
                     ax.text(tvec[-1]+10, 1.25-i,
-                            '%.1f' % (cell.AP_train[int(self.TRANSIENT / cell.timeres_python):].sum() * 1000. / cell.tstopms),
+                            '%.1f' % (cell.AP_train[int(self.TRANSIENT / cell.dt):].sum() * 1000. / cell.tstop),
                             va='bottom', ha='left', fontsize=smallfontsize)
             
             if show_rates:
@@ -1446,7 +1446,7 @@ class plotBenchmarkData(object):
             ax.set_xlabel(r'$t$ (ms)', labelpad=0.1)
             ax.set_yticks(yticks)
             ax.set_yticklabels(yticklabels)
-            ax.set_xlim(self.TRANSIENT, tstopms)
+            ax.set_xlim(self.TRANSIENT, tstop)
             ax.set_ylim(yticks[-1]-0.5, 1)          
         
             ax.text(-0.05, 1.0, 'g',
@@ -1479,8 +1479,8 @@ class plotBenchmarkData(object):
             
         
             for i, (cellkey, cell) in enumerate(cells.iteritems()):
-                TRANSIENT = int(self.TRANSIENT / cell.timeres_python)
-                ISI_tvec = np.arange(cell.somav[TRANSIENT:].size) * cell.timeres_python
+                TRANSIENT = int(self.TRANSIENT / cell.dt)
+                ISI_tvec = np.arange(cell.somav[TRANSIENT:].size) * cell.dt
                 ISI = np.diff(ISI_tvec[cell.AP_train[TRANSIENT:]==1])
                 ax = fig.add_axes([x[i], y[i], width, height])
                 try:
@@ -1539,9 +1539,9 @@ class plotBenchmarkData(object):
                 N = len(neurons)
                 
                 # bin spike rasters
-                bwidth = binwidth / self.testdInst.cellParameters['timeres_python']
-                mint = self.TRANSIENT / self.testdInst.cellParameters['timeres_python']
-                maxt = self.testdInst.cellParameters['tstopms'] / self.testdInst.cellParameters['timeres_python']
+                bwidth = binwidth / self.testdInst.cellParameters['dt']
+                mint = self.TRANSIENT / self.testdInst.cellParameters['dt']
+                maxt = self.testdInst.cellParameters['tstop'] / self.testdInst.cellParameters['dt']
                 rasters = db.select_neurons_interval(neurons,  T=[mint, maxt])
                 
                 bins = np.arange(mint, maxt+1, bwidth)
@@ -1589,23 +1589,23 @@ class plotBenchmarkData(object):
         
         
         
-        plotSpCells(self, T=[self.TRANSIENT, np.array([self.TRANSIENT, tstopms]).mean()], cellinterval=20)
-        plotSpikeTrains(self, cells, tstopms=tstopms)
+        plotSpCells(self, T=[self.TRANSIENT, np.array([self.TRANSIENT, tstop]).mean()], cellinterval=20)
+        plotSpikeTrains(self, cells, tstop=tstop)
         
         return fig
 
 
-    def plot_figure_09(self, cells, tstopms=1500., ):
+    def plot_figure_09(self, cells, tstop=1500., ):
         '''
         figure 09
         '''
         #load recording
-        if self.testdInst.cellParameters['tstopms'] < tstopms:
-            tstopms = self.testdInst.cellParameters['tstopms']
+        if self.testdInst.cellParameters['tstop'] < tstop:
+            tstop = self.testdInst.cellParameters['tstop']
         
-        tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['timeres_python'],
-                            tstopms / self.testdInst.cellParameters['timeres_python']+1, dtype=int)
-        tvec = tinds * self.testdInst.cellParameters['timeres_python']
+        tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['dt'],
+                            tstop / self.testdInst.cellParameters['dt']+1, dtype=int)
+        tvec = tinds * self.testdInst.cellParameters['dt']
         
         #load some traces
         f = h5py.File(self.savefolder + '/ViSAPy_noiseless.h5', 'r')
@@ -1662,7 +1662,7 @@ class plotBenchmarkData(object):
             color='k', clip_on=False)
         ax.text((axis[0]+np.diff(axis[:2])[0])*1.01, axis[2], '%.2f mV' % scale,
                  rotation='vertical', va='bottom', fontsize=smallfontsize)
-        ax.set_xlim([self.TRANSIENT, tstopms])
+        ax.set_xlim([self.TRANSIENT, tstop])
         
         ax.text(-0.05, 1.0, 'a',
             horizontalalignment='center',
@@ -1696,7 +1696,7 @@ class plotBenchmarkData(object):
         ax.text((axis[0]+np.diff(axis[:2])[0])*1.01, axis[2], '%.2f mV' % scale,
                  rotation='vertical', va='bottom', fontsize=smallfontsize)
         
-        ax.set_xlim([self.TRANSIENT, tstopms])
+        ax.set_xlim([self.TRANSIENT, tstop])
         
         ax.text(-0.05, 1.0, 'b',
             horizontalalignment='center',
@@ -1737,7 +1737,7 @@ class plotBenchmarkData(object):
             color='k', clip_on=False)
         ax.text((axis[0]+np.diff(axis[:2])[0])*1.01, axis[2], '%.2f mV' % scale,
                  rotation='vertical', va='bottom', fontsize=smallfontsize)
-        ax.set_xlim([self.TRANSIENT, tstopms])
+        ax.set_xlim([self.TRANSIENT, tstop])
         
         ax.text(-0.05, 1.0, 'c',
             horizontalalignment='center',
@@ -1859,11 +1859,11 @@ class plotBenchmarkData(object):
             AP_trains = np.array(AP_trains)
             AP_trains = AP_trains.sum(axis=0)
             #null out spikes at times < TRANSIENT
-            AP_trains[:int(self.TRANSIENT / self.testdInst.cellParameters['timeres_python'])] = 0
+            AP_trains[:int(self.TRANSIENT / self.testdInst.cellParameters['dt'])] = 0
             AP_times = np.where(AP_trains >= 1)[0].astype(float)
-            AP_times *= self.testdInst.cellParameters['timeres_python']
+            AP_times *= self.testdInst.cellParameters['dt']
             
-            AP_bins = np.arange(0, self.testdInst.cellParameters['tstopms'], 100)
+            AP_bins = np.arange(0, self.testdInst.cellParameters['tstop'], 100)
             hist = np.histogram(AP_times, AP_bins)[0][:10]
             
             del AP_trains, AP_times
@@ -1886,7 +1886,7 @@ class plotBenchmarkData(object):
             for cellindex, cell in cells.iteritems():
                 nanmat = np.zeros(lfp_filtered.shape)*np.nan
                 spi = np.where(cell.AP_train[int(self.TRANSIENT /
-                                                 self.testdInst.cellParameters['timeres_python']):lfp_filtered.shape[1]] == 1)[0]
+                                                 self.testdInst.cellParameters['dt']):lfp_filtered.shape[1]] == 1)[0]
                 for i in spi:
                     start = i - int(1.*self.testdInst.TEMPLATEOFFS *
                                     self.testdInst.TEMPLATELEN) + 1
@@ -1967,7 +1967,7 @@ class plotBenchmarkData(object):
         #params
         #sp_win = ((np.array([0, self.testdInst.TEMPLATELEN]) -
         #            self.testdInst.TEMPLATELEN*self.testdInst.TEMPLATEOFFS)
-        #                * self.testdInst.cellParameters['timeres_python']).tolist()
+        #                * self.testdInst.cellParameters['dt']).tolist()
         ncomps = self.testdInst.nPCA
 
         ##load recording
@@ -2067,7 +2067,7 @@ class plotBenchmarkData(object):
         return fig
  
 
-    def plot_figure_11(self, cells, show_rates=True, tstopms=1500.):
+    def plot_figure_11(self, cells, show_rates=True, tstop=1500.):
         '''
         gather action potentials from all cells, and plot spike trains
         '''        
@@ -2077,10 +2077,10 @@ class plotBenchmarkData(object):
         yticklabels = []
         yticks = []
         for i, (cellkey, cell) in enumerate(cells.iteritems()):
-            tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['timeres_python'],
-                              tstopms / self.testdInst.cellParameters['timeres_python'] + 1,
+            tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['dt'],
+                              tstop / self.testdInst.cellParameters['dt'] + 1,
                               dtype=int)
-            tvec = tinds * self.testdInst.cellParameters['timeres_python']
+            tvec = tinds * self.testdInst.cellParameters['dt']
             ax.plot(tvec, cell.somav[tinds].astype(float) - i*100,
                 color = self.colors[cellkey],
                 alpha = self.alphas[cellkey],
@@ -2092,7 +2092,7 @@ class plotBenchmarkData(object):
             
             if show_rates:
                 ax.text(tvec[-1]+30, cell.somav[tinds].astype(float).mean()-i*100,
-                        '%.1f' % (cell.AP_train[tinds[0]:].sum() *1000. / cell.tstopms),
+                        '%.1f' % (cell.AP_train[tinds[0]:].sum() *1000. / cell.tstop),
                         va='bottom', ha='left', fontsize=smallfontsize)
         
         if show_rates:
@@ -2112,7 +2112,7 @@ class plotBenchmarkData(object):
         ax.set_yticks(yticks)
         ax.set_yticklabels(yticklabels)
         
-        ax.set_xlim(self.TRANSIENT, tstopms)
+        ax.set_xlim(self.TRANSIENT, tstop)
         ax.set_ylim(top=20)
         
         #ax.axis(ax.axis('tight'))
@@ -2180,7 +2180,7 @@ class plotBenchmarkData(object):
             fontsize=18, fontweight='demibold',
             transform=ax3.transAxes)        
         
-        ax3.set_xlim(self.TRANSIENT, tstopms)
+        ax3.set_xlim(self.TRANSIENT, tstop)
 
         return fig
     
@@ -2357,7 +2357,7 @@ class plotBenchmarkData(object):
         #params
         sp_win = ((np.array([0, self.testdInst.TEMPLATELEN]) -
                     self.testdInst.TEMPLATELEN*self.testdInst.TEMPLATEOFFS)
-                * self.testdInst.cellParameters['timeres_python']).tolist()
+                * self.testdInst.cellParameters['dt']).tolist()
         
         #load recording
         f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_filterstep_1.h5'))
@@ -2393,7 +2393,7 @@ class plotBenchmarkData(object):
         
             #mean waveforms of cell
             templates = sp_waves['data'][:, clust_idx==cellindex, :].mean(axis=1)
-            t = np.arange(templates.shape[0]) * TD.cellParameters['timeres_python']
+            t = np.arange(templates.shape[0]) * TD.cellParameters['dt']
             
             print templates.min(), templates.max()
         
@@ -2482,7 +2482,7 @@ class plotBenchmarkData(object):
         #plot ISI histograms
         for cellindex in cellindices:
             cell = cells[cellindex]
-            tvec = np.arange(cell.somav.size) * cell.timeres_python
+            tvec = np.arange(cell.somav.size) * cell.dt
             ISI = np.diff(tvec[cell.AP_train==1])
             
             try:
@@ -2653,7 +2653,7 @@ class plotBenchmarkData(object):
         #params
         sp_win = ((np.array([0, self.testdInst.TEMPLATELEN]) -
                     self.testdInst.TEMPLATELEN*self.testdInst.TEMPLATEOFFS)
-                * self.testdInst.cellParameters['timeres_python']).tolist()
+                * self.testdInst.cellParameters['dt']).tolist()
     
         #load recording
         f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_filterstep_1.h5'))

@@ -19,7 +19,7 @@ def _run_simulation(cell, variable_dt=False, atol=0.001):
     Running the actual simulation in NEURON, simulations in NEURON
     is now interruptable.
     '''
-    neuron.h.dt = cell.timeres_NEURON
+    neuron.h.dt = cell.dt
     
     cvode = neuron.h.CVode()
     
@@ -41,23 +41,23 @@ def _run_simulation(cell, variable_dt=False, atol=0.001):
     neuron.h.frecord_init()
     
     #Starting simulation at t != 0
-    neuron.h.t = cell.tstartms
+    neuron.h.t = cell.tstart
     
     cell._loadspikes()
         
     #print sim.time at intervals
     cdef double counter = 0.
     cdef double interval
-    cdef double tstopms = cell.tstopms
+    cdef double tstop = cell.tstop
     cdef double t0 = time()
     cdef double ti = neuron.h.t
     cdef double rtfactor
-    if tstopms > 1000:
-        interval = 1 / cell.timeres_NEURON * 100
+    if tstop > 1000:
+        interval = 1 / cell.dt * 100
     else:
-        interval = 1 / cell.timeres_NEURON * 10
+        interval = 1 / cell.dt * 10
     
-    while neuron.h.t < tstopms:
+    while neuron.h.t < tstop:
         neuron.h.fadvance()
         counter += 1.
         if divmod(counter, interval)[1] == 0:
@@ -82,13 +82,12 @@ def _run_simulation_with_electrode(cell,
     #c-declare some variables
     cdef int i, j, tstep, ncoeffs
     cdef int totnsegs = cell.totnsegs
-    cdef double tstopms = cell.tstopms
+    cdef double tstop = cell.tstop
     cdef double counter, interval
     cdef double t0
     cdef double ti
     cdef double rtfactor
-    cdef double timeres_NEURON = cell.timeres_NEURON
-    cdef double timeres_python = cell.timeres_python
+    cdef double dt = cell.dt
     #cdef np.ndarray[DTYPE_t, ndim=3, negative_indices=False] dotprodcoeffs
     cdef np.ndarray[DTYPE_t, ndim=2, negative_indices=False] coeffs, LFP
     cdef np.ndarray[DTYPE_t, ndim=1, negative_indices=False] imem = \
@@ -107,7 +106,7 @@ def _run_simulation_with_electrode(cell,
 
 
     # Initialize NEURON simulations of cell object    
-    neuron.h.dt = timeres_NEURON
+    neuron.h.dt = dt
     
     #integrator
     cvode = neuron.h.CVode()
@@ -130,7 +129,7 @@ def _run_simulation_with_electrode(cell,
     neuron.h.frecord_init()
     
     #Starting simulation at t != 0
-    neuron.h.t = cell.tstartms
+    neuron.h.t = cell.tstart
     
     #load spike times from NetCon
     cell._loadspikes()
@@ -140,17 +139,17 @@ def _run_simulation_with_electrode(cell,
     tstep = 0
     t0 = time()
     ti = neuron.h.t
-    if tstopms > 1000:
-        interval = 1 / timeres_NEURON * 100
+    if tstop > 1000:
+        interval = 1 / dt * 100
     else:
-        interval = 1 / timeres_NEURON * 10
+        interval = 1 / dt * 10
         
     #temp vector to store membrane currents at each timestep
     imem = np.empty(cell.totnsegs)
     #LFPs for each electrode will be put here during simulation
     if to_memory:
         LFP = np.empty((dotprodcoeffs.shape[1],
-                                    cell.tstopms / cell.timeres_NEURON + 1))
+                                    cell.tstop / cell.dt + 1))
     
     #LFPs for each electrode will be put here during simulations
     if to_file:
@@ -159,13 +158,13 @@ def _run_simulation_with_electrode(cell,
             file_name += '.h5'
         el_LFP_file = h5py.File(file_name, 'w')
         el_LFP_file['electrode%.3i' % 0] = np.empty((dotprodcoeffs.shape[1],
-                                    cell.tstopms / cell.timeres_NEURON + 1))
+                                    cell.tstop / cell.dt + 1))
 
     #multiply segment areas with specific membrane currents later:
     #mum2 conversion factor:
     area *= 1E-2
     coeffs = dotprodcoeffs[0] #not used yet
-    while neuron.h.t < tstopms:
+    while neuron.h.t < tstop:
         if neuron.h.t >= 0:
             i = 0
             for sec in cell.allseclist:
@@ -300,15 +299,15 @@ class DriftCell(TemplateCell):
         if len(rec_variables) > 0:
             self._set_variable_recorders(rec_variables)
         
-        if driftInterval < self.timeres_python:
-            raise ValueError, 'driftinterval < timeres_python!'
+        if driftInterval < self.dt:
+            raise ValueError, 'driftinterval < dt!'
         if driftInterval != None:
             #convert driftinterval to tstep
-            driftint = int(driftInterval / self.timeres_python)
+            driftint = int(driftInterval / self.dt)
         else:
             driftint = None
         
-        #run fadvance until t >= tstopms, and calculate LFP if asked for
+        #run fadvance until t >= tstop, and calculate LFP if asked for
         if dotprodcoeffs is None:
             if not rec_imem:
                 print("rec_imem = %s, membrane currents will not be recorded!" \
