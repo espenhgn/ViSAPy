@@ -79,7 +79,7 @@ def remove_axis_junk(ax, which=['right', 'top']):
     ax.yaxis.set_ticks_position('left')
     
 
-def get_colors(num=16, cmap=plt.cm.rainbow):
+def get_colors(num=16, cmap=plt.cm.viridis):
     '''return a list of color tuples to use in plots'''
     colors = []
     for i in range(num):
@@ -137,7 +137,7 @@ def fetPCA(sp_waves, ncomps=2):
 
 class plotBenchmarkData(object):
     
-    def __init__(self, testdInst, cmap=plt.cm.Set1, TRANSIENT=500.):
+    def __init__(self, testdInst, cmap=plt.cm.viridis, TRANSIENT=500.):
         '''
         Plotting methods
         
@@ -918,7 +918,7 @@ class plotBenchmarkData(object):
                                        linewidths = (1),
                                        linestyles = 'solid',
                                        #clip_on=False,
-                                       cmap = plt.cm.get_cmap('jet', f['C'].shape[0]),
+                                       cmap = plt.cm.get_cmap('viridis', f['C'].shape[0]),
                                        zorder=0,
                                        #rasterized=True,
                                        )
@@ -977,7 +977,7 @@ class plotBenchmarkData(object):
         for i in range(f['C'].shape[0]):
             ax = fig.add_axes([x[i], y[i], width, height], frameon=False)
             im = ax.matshow(f['C'].value[i, ], rasterized=True,
-                            cmap = plt.cm.get_cmap('jet', f['C'].shape[0]))
+                            cmap = plt.cm.get_cmap('viridis', f['C'].shape[0]))
             rect = np.array(ax.get_position().bounds)
             rect[0] += rect[2]  #- 0.02
             rect[2] = 0.015
@@ -1228,7 +1228,7 @@ class plotBenchmarkData(object):
                 
                 
                 ax1 = fig.add_subplot(GS53[1, 0])
-                im1 = ax1.matshow(correlationsEx, cmap = plt.cm.get_cmap('jet', 41))
+                im1 = ax1.matshow(correlationsEx, cmap = plt.cm.get_cmap('viridis', 41))
                 ax1.set_title('corr.coeff, exc. trains')
                 ax1.xaxis.set_ticks_position('bottom')
                 yticklabels = []
@@ -1281,7 +1281,7 @@ class plotBenchmarkData(object):
                 
                 ax3 = fig.add_subplot(GS53[1, 1])
             
-                im3 = ax3.matshow(correlationsIn, cmap = plt.cm.get_cmap('jet', 41))
+                im3 = ax3.matshow(correlationsIn, cmap = plt.cm.get_cmap('viridis', 41))
                 ax3.set_title('corr.coeff, inh. trains')
                 ax3.xaxis.set_ticks_position('bottom')
                 yticklabels = []
@@ -1315,7 +1315,7 @@ class plotBenchmarkData(object):
                 
                 ax4 = fig.add_subplot(GS53[1, 2])
             
-                im4 = ax4.matshow(correlationsExIn, cmap = plt.cm.get_cmap('jet', 41))
+                im4 = ax4.matshow(correlationsExIn, cmap = plt.cm.get_cmap('viridis', 41))
                 ax4.set_title('corr.coeff, exc. and inh.')
                 ax4.xaxis.set_ticks_position('bottom')
                 yticklabels = []
@@ -1559,7 +1559,7 @@ class plotBenchmarkData(object):
                 
                 ax = fig.add_subplot(GS53[4, 2])
                 im = ax.matshow(correlations,
-                                cmap=plt.cm.get_cmap('jet', 41), vmax=vmax)
+                                cmap=plt.cm.get_cmap('viridis', 41), vmax=vmax)
                 ax.set_title('corr. coeff.')
                 ax.xaxis.set_ticks_position('bottom')
                 ticklabels = []
