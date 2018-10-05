@@ -301,7 +301,7 @@ class BenchmarkData(object):
         This method takes no keyword arguments.
         '''
         if RANK == 0:
-            if np.any(np.array(self.populationParameters.keys()) == 'X'):
+            if 'X' in self.populationParameters.keys():
                 pop_soma_pos = self.draw_rand_pos_square()
             else:
                 pop_soma_pos = self.draw_rand_pos()
