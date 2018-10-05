@@ -77,7 +77,7 @@ class GDF(object):
                 fname : str,
                     name of gdf-file
         """
-        with open(fname, 'rb') as f:
+        with open(fname, 'r') as f:
             while True:
                 a = []
                 for i in range(self.bsize):
