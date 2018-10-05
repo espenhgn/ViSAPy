@@ -2,11 +2,17 @@
 
 import numpy as np
 import os
-if not os.environ.has_key('DISPLAY'):
-    import matplotlib
-    matplotlib.use('Agg')
+import sys
+if sys.version < '3':
+    if not os.environ.has_key('DISPLAY'):
+        import matplotlib
+        matplotlib.use('Agg')
+else:
+    if 'DISPLAY' in os.environ.keys():
+        import matplotlib
+        matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import cyextensions
+from . import cyextensions
 
 class NonStationaryPoisson(object):
     '''
@@ -47,8 +53,8 @@ class NonStationaryPoisson(object):
         for x in self.poisson:
             poissontimes = np.r_[poissontimes, x]
         
-        print 'non-stationary poisson process average rate: %.3f' % \
-                (poissontimes.size / float(N) / self.tvec[-1] * 1E3)
+        print('non-stationary poisson process average rate: %.3f' % 
+                (poissontimes.size / float(N) / self.tvec[-1] * 1E3))
     
 
     def nonstationary_poisson(self,

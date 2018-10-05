@@ -4,9 +4,15 @@ Spiking-neuron (network) models implemented in NEST
 '''
 import numpy as np
 import os
-if not os.environ.has_key('DISPLAY'):
-    import matplotlib
-    matplotlib.use('Agg')
+import sys
+if sys.version < '3':
+    if not os.environ.has_key('DISPLAY'):
+        import matplotlib
+        matplotlib.use('Agg')
+else:
+    if 'DISPLAY' in os.environ.keys():
+        import matplotlib
+        matplotlib.use('Agg')
 import h5py
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -151,11 +157,11 @@ class Network(object):
         COMM.Barrier() 
         
         if RANK == 0:
-            print 'running nest.Simulate until simtime=%.2f' % self.simtime
+            print('running nest.Simulate until simtime=%.2f' % self.simtime)
         nest.Simulate(self.simtime)
         
         if RANK == 0:
-            print 'simulation finished'
+            print('simulation finished')
         
         COMM.Barrier()
 
@@ -172,7 +178,7 @@ class Network(object):
             ((int), (int)) : tuple of tuples with spike detektor GIDs
         '''
         if RANK == 0:
-            print 'setting up spike detectors'
+            print('setting up spike detectors')
 
         #create spike detektor for excitatory and inhibitory populations
         espikes = nest.Create("spike_detector", 1,
@@ -201,7 +207,7 @@ class Network(object):
             (int) : GID of Poisson generator
         '''
         if RANK == 0:
-            print 'setting up poisson_generator'
+            print('setting up poisson_generator')
                 
         #create Poisson generator with specific rate
         noise = nest.Create("poisson_generator", 1, {"rate": self.p_rate})
@@ -216,7 +222,7 @@ class Network(object):
         This method takes no keyword arguments
         '''
         if self.espikes is None and self.ispikes is None:
-            print 'nothing to print because there are no spike recorders'
+            print('nothing to print because there are no spike recorders')
             return
         
         #gather data
@@ -238,17 +244,13 @@ class Network(object):
 
         #print out statistics
         if RANK == 0:
-            print "Number of exc synapses/neuron:", \
-                num_synapses_ex / float(self.N)
-            print "Number of inh synapses/neuron:", \
-                num_synapses_in / float(self.N)
-            print "Number of synapses:", num_synapses_in+num_synapses_ex
-            print "Synapse density:", (num_synapses_in+num_synapses_ex) / \
-                float(self.N**2)
-            print "Ratio number of exc/inh synapses:", num_synapses_ex / \
-                float(num_synapses_in)
-            print "Excitatory rate       : %.2f Hz" % erate
-            print "Inhibitory rate       : %.2f Hz" % irate
+            print("Number of exc synapses/neuron:", num_synapses_ex / float(self.N))
+            print("Number of inh synapses/neuron:", num_synapses_in / float(self.N))
+            print("Number of synapses:", num_synapses_in+num_synapses_ex)
+            print("Synapse density:", (num_synapses_in+num_synapses_ex) / float(self.N**2))
+            print("Ratio number of exc/inh synapses:", num_synapses_ex / float(num_synapses_in))
+            print("Excitatory rate       : %.2f Hz" % erate)
+            print("Inhibitory rate       : %.2f Hz" % irate)
         
         COMM.Barrier()
 
@@ -271,7 +273,7 @@ class Network(object):
         
         '''
         if self.nodes_ex is None and self.nodes_in is None:
-            print "No nodes exist for {}, plot not possible".format(self)
+            print("No nodes exist for {}, plot not possible".format(self))
             return
         
         if from_db and RANK == 0:
@@ -456,7 +458,7 @@ class Network(object):
     
             # create db from excitatory files
             f = os.path.join(self.savefolder, 'SpTimesEx.db')
-            print 'creating database file {}'.format(f)
+            print('creating database file {}'.format(f))
             
             db = GDF(f, debug=True)
             db.create(re=os.path.join(self.savefolder, self.label) + '-ex-*.gdf',
@@ -465,7 +467,7 @@ class Network(object):
     
             # create db from inhibitory files
             f = os.path.join(self.savefolder, 'SpTimesIn.db')
-            print 'creating database file {}'.format(f)
+            print('creating database file {}'.format(f))
             
             db = GDF(f, debug=True)
             db.create(re=os.path.join(self.savefolder, self.label) + '-in-*.gdf',
@@ -552,7 +554,7 @@ class StationaryPoissonNetwork(Network):
             tuple of int, GID of Poisson generator mechanism        
         '''
         if RANK == 0:
-            print 'setting up poisson_generator'
+            print('setting up poisson_generator')
         
         #create poisson generator    
         #noise = nest.Create("poisson_generator", 1, {"rate": rate})
@@ -573,14 +575,14 @@ class StationaryPoissonNetwork(Network):
         This method takes no keyword arguments
         '''
         if RANK == 0:
-            print 'connecting spike detectors to nodes'
+            print('connecting spike detectors to nodes')
         nest.Connect(self.nodes_ex, self.espikes, conn_spec='all_to_all',
                      syn_spec=dict(model="excitatory"))
         nest.Connect(self.nodes_in, self.ispikes, conn_spec='all_to_all',
                      syn_spec=dict(model="excitatory"))
 
         if RANK == 0:
-            print 'connecting noise generators and nodes'
+            print('connecting noise generators and nodes')
         nest.Connect(self.noiseE, self.nodes_ex, conn_spec='all_to_all',
                      syn_spec=dict(model="excitatory"))
         nest.Connect(self.noiseI, self.nodes_in, conn_spec='all_to_all',
@@ -610,8 +612,8 @@ class StationaryPoissonNetwork(Network):
         irate = COMM.bcast(irate, root=SIZE - 1)
 
         if RANK == 0:
-            print "Excitatory rate       : %.2f Hz" % erate
-            print "Inhibitory rate       : %.2f Hz" % irate
+            print("Excitatory rate       : %.2f Hz" % erate)
+            print("Inhibitory rate       : %.2f Hz" % irate)
 
 
 
@@ -725,7 +727,7 @@ class BrunelNetwork(Network):
             ((int), (int)) : tuple of tuples with neuron GIDs
         '''
         if RANK == 0:
-            print "Building network"
+            print("Building network")
 
         nest.SetDefaults("iaf_psc_delta", self.neuron_params)
 
@@ -742,10 +744,10 @@ class BrunelNetwork(Network):
         This method takes no keyword arguments.
         '''
         if RANK == 0:
-            print 'connecting devices'
+            print('connecting devices')
         
         if RANK == 0:
-            print 'connecting noise generators and nodes'
+            print('connecting noise generators and nodes')
         nest.Connect(self.noise, self.nodes_ex,
                      conn_spec='all_to_all',
                      syn_spec=dict(model="excitatory"))
@@ -754,7 +756,7 @@ class BrunelNetwork(Network):
                      syn_spec=dict(model="excitatory"))
 
         if RANK == 0:
-            print 'connecting spike detectors'
+            print('connecting spike detectors')
         nest.Connect(self.nodes_ex, self.espikes,
                      conn_spec='all_to_all',
                      syn_spec=dict(model="excitatory"))
@@ -764,7 +766,7 @@ class BrunelNetwork(Network):
 
 
         if RANK == 0:
-            print 'connecting nodes'
+            print('connecting nodes')
 
         nest.Connect(self.nodes_ex,
                      self.nodes_ex+self.nodes_in,
@@ -857,7 +859,7 @@ class RingNetwork(Network):
             try:
                 assert(allow_multapses)
             except AssertionError as ae:
-                raise ae, 'allow_multapses must be True for exc_inh_assymetry != 1'
+                raise ae('allow_multapses must be True for exc_inh_assymetry != 1')
         self.exc_inh_assymetry = exc_inh_assymetry
 
         #create dictionary for LIF neuron params
@@ -962,17 +964,17 @@ class RingNetwork(Network):
 
         #Connect layers:
         if RANK == 0:
-            print "Connecting network..."
-            print "exc -> exc"
+            print("Connecting network...")
+            print("exc -> exc")
         topology.ConnectLayers(exc, exc, exc_par)
         if RANK == 0:
-            print "exc -> inh"
+            print("exc -> inh")
         topology.ConnectLayers(exc, inh, exc_par)
         if RANK == 0:
-            print "inh -> exc"
+            print("inh -> exc")
         topology.ConnectLayers(inh, exc, inh_par)
         if RANK == 0:
-            print "inh -> inh"
+            print("inh -> inh")
         topology.ConnectLayers(inh, inh, inh_par)
 
         return nodes_ex, nodes_in
@@ -985,12 +987,12 @@ class RingNetwork(Network):
         This method takes no keyword arguments
         '''
         if RANK == 0:
-            print 'connecting noise generators and nodes'
+            print('connecting noise generators and nodes')
         nest.Connect(self.noise, self.nodes_ex[0]+self.nodes_in[0],
                      conn_spec='all_to_all')
 
         if RANK == 0:
-            print 'connecting spike detectors to nodes'
+            print('connecting spike detectors to nodes')
         nest.Connect(self.nodes_ex[0], self.espikes, conn_spec='all_to_all')
         nest.Connect(self.nodes_in[0], self.ispikes, conn_spec='all_to_all')
 
@@ -1121,7 +1123,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                             lambda_t_i, self.NI)
                         self.nonStatPoisson += nonStat_I
                     else:
-                        raise Exception, "projection is not 'exc' and/or 'inh'"
+                        raise Exception("projection is not 'exc' and/or 'inh'")
             
                 #save lambda_t_E and lambda_t_I in file for plots later
                 f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'))
@@ -1227,7 +1229,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
         
         '''
         if RANK == 0:
-            print 'generating non-stationary Poisson inputs'
+            print('generating non-stationary Poisson inputs')
         
         if RANK == 0:
             #generate poisson spike time trains
@@ -1250,7 +1252,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
         This method takes no keyword arguments
         '''
         if RANK == 0:
-            print 'setting up spike_generator'
+            print('setting up spike_generator')
         
         spike_generator = nest.Create("spike_generator",
                                       len(self.nonStatPoisson))
@@ -1268,7 +1270,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
         This method takes no keyword arguments
         '''
         if RANK == 0:
-            print 'connecting non-stationary poisson times'
+            print('connecting non-stationary poisson times')
         
         i = 0
         for proj in self.projection:
@@ -1292,7 +1294,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                 i += self.NI
             else:
                 messg = "projection {} is not in ['exc' or 'inh']".format(proj)
-                raise Exception, messg
+                raise Exception(messg)
 
 
     def raster_plots_full(self, xlim=[0, 1000], from_db=True):
@@ -1592,9 +1594,9 @@ class ExternalNoiseRingNetwork(RingNetwork):
             fig = plt.figure(figsize=(10, 10))
             
             fig = plot_nonstat(fig, xlim)
-            print 'ok'
+            print('ok')
             fig = plot_rasters(fig, xlim, from_db)
-            print 'ok'
+            print('ok')
 
             
             return fig
@@ -1631,7 +1633,7 @@ if __name__ == '__main__':
             os.system('rm -r savedata')
         COMM.Barrier()
         
-        print '\n\nTest {}\n\n'.format(network) 
+        print('\n\nTest {}\n\n'.format(network)) 
         net = network(**params)
         net.run()
         net.get_results()

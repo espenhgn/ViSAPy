@@ -13,7 +13,7 @@ import h5py
 import os
 import sys
 import glob
-from spike_a_cut import SpikeACut
+from .spike_a_cut import SpikeACut
 from scipy.interpolate import interp1d
 from mpi4py import MPI
 
@@ -210,8 +210,7 @@ class LogBumpFilterBank(object):
         self.filt = fftshift(self.filt, axes=1)
 
         # truncate filters to specifed number of taps
-        self.filt = self.filt[:, self.nyquist -
-                                    (self.taps/2+1):self.nyquist + self.taps/2]
+        self.filt = self.filt[:, self.nyquist - (self.taps//2+1):self.nyquist + self.taps//2]
 
 
     def filter(self, data):
@@ -233,9 +232,9 @@ class LogBumpFilterBank(object):
 
         # filter data with filter bank, handling delay
         zi = np.zeros((self.taps-1, data.shape[1]))
-        pad = (self.taps-1)/2
+        pad = (self.taps-1)//2
         for i in range(self.n):
-            print '.',
+            print('.'),
             zi.fill(0.)
             f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
             fdata[i,:-pad] = f[pad:]
@@ -381,7 +380,7 @@ class NoiseFeatures(LogBumpFilterBank):
         elif self.fname.endswith('npy'):
             self.input_data = np.load(self.fname)
         else:
-            raise Exception, 'end of %s must be .npy or .h5' % self.fname
+            raise Exception('end of %s must be .npy or .h5' % self.fname)
         
         
         #ensure cols are time, rows channels:
@@ -456,17 +455,17 @@ class NoiseFeatures(LogBumpFilterBank):
                                           Fs=1,
                                           NFFT=self.NFFT,
                                           sides='twosided',
-                                          noverlap=int(self.NFFT*3/4))
+                                          noverlap=int(self.NFFT*3//4))
                 #redo normalization
                 psd0[:, i] = np.sqrt(XX*self.NFFT).T
             
             #for compatibility with 'scipy.fft' output, reorder elements
-            freqs = np.r_[freqs0[self.NFFT/2:], freqs0[:self.NFFT/2]]
-            psd = np.r_[psd0[self.NFFT/2:, ], psd0[:self.NFFT/2, ]]
+            freqs = np.r_[freqs0[self.NFFT//2:], freqs0[:self.NFFT//2]]
+            psd = np.r_[psd0[self.NFFT//2:, ], psd0[:self.NFFT//2, ]]
         else:
             errmsg = "psdmethod = {} not in ['mlab', 'scipy.fft']".format(
                 self.psdmethod)
-            raise Exception, errmsg
+            raise Exception(errmsg)
 
         return psd, freqs
 
@@ -521,10 +520,10 @@ class CorrelatedNoise(LogBumpFilterBank):
 
         # filter data with filter bank, handling delay
         zi = np.zeros((self.taps-1, data.shape[1]))
-        pad = (self.taps-1)/2
+        pad = (self.taps-1)//2
         for i in range(self.n):
             if i % SIZE == RANK:
-                print '.',
+                print('.'),
                 f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
                 f_[str(i)] = np.r_[f[pad:], trans[:pad]].astype('float32')
         
@@ -557,7 +556,7 @@ class CorrelatedNoise(LogBumpFilterBank):
                 print('deleting {}'.format(fname))
                 try:
                     os.remove(fname)
-                except OSError, e:  ## if failed, report it back to the user ##
+                except OSError as e:  ## if failed, report it back to the user ##
                     print("Error: {} - {}.".format(e.filename, e.strerror))
                                              
         COMM.Barrier()
@@ -598,7 +597,7 @@ class CorrelatedNoise(LogBumpFilterBank):
             print('removing temporary file {}'.format(os.path.join(self.savefolder, 'tmpnoise.h5')))
             try:
                 os.remove(os.path.join(self.savefolder, 'tmpnoise.h5'))
-            except OSError, e:
+            except OSError as e:
                 print("Error: {} - {}.".format(e.filename, e.strerror))
             DATA = DATA.T
             DATA *= self.amplitude_scaling
@@ -640,7 +639,7 @@ class CorrelatedNoise(LogBumpFilterBank):
         
         
         #deal with each channel independently
-        for i in xrange(cols):
+        for i in range(cols):
             if i % SIZE == RANK:
                 #scale the PSD to fit new dimensions
                 psd = scale_matrix(self.psd[:, i], (rowsfft, )).astype('complex')
@@ -662,9 +661,9 @@ class CorrelatedNoise(LogBumpFilterBank):
                 
                 data[:, i] = pink0[:rows].astype('float32')
                 
-            print '.',
+            print('.'),
         
-        print 'pinkened noise done'
+        print('pinkened noise done')
 
         #reset state
         np.random.set_state(state)

@@ -2,9 +2,15 @@
 '''Class definition for plotting benchmark data generated with ViSAPy'''
 
 import os
-if not os.environ.has_key('DISPLAY'):
-    import matplotlib
-    matplotlib.use('Agg')
+import sys
+if sys.version < '3':
+    if not os.environ.has_key('DISPLAY'):
+        import matplotlib
+        matplotlib.use('Agg')
+else:
+    if 'DISPLAY' in os.environ.keys():
+        import matplotlib
+        matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from ViSAPy import GDF, fcorr
@@ -186,7 +192,7 @@ class plotBenchmarkData(object):
             
             #get the cells
             cells = self.testdInst.read_lfp_cell_files(cellindices)
-            print 'cells ok'
+            print('cells ok')
 
             #remove vmem, imem if they exist, they are not needed here
             for cell in cells.itervalues():
@@ -200,10 +206,10 @@ class plotBenchmarkData(object):
                 fig = self.testdInst.networkInstance.raster_plots(xlim=[500., 1500.])
                 fig.savefig(os.path.join(self.savefolder, 'nestsimrasters.pdf'),
                             dpi=150)
-                print 'raster_plots() ok'
+                print('raster_plots() ok')
                 plt.close(fig)
             except:
-                print 'raster_plots() not ok', sys.exc_info()
+                print('raster_plots() not ok', sys.exc_info())
             
             
             #calculate some AP_trains
@@ -215,40 +221,40 @@ class plotBenchmarkData(object):
                 fig = self.plot_figure_02(cells=cells)
                 fig.savefig(os.path.join(self.savefolder, 'figure_02.pdf'),
                             dpi=150)
-                print 'plot_figure_02() ok'
+                print('plot_figure_02() ok')
                 plt.close(fig)
             except:
-                print 'plot_figure_02() not ok', sys.exc_info()
+                print('plot_figure_02() not ok', sys.exc_info())
 
 
             try:
                 fig = self.plot_figure_07()
                 fig.savefig(os.path.join(self.savefolder, 'figure_07.pdf'),
                             dpi=150)
-                print 'plot_figure_07() ok'
+                print('plot_figure_07() ok')
                 plt.close(fig)
             except:
-                print 'plot_figure_07() not ok', sys.exc_info()
+                print('plot_figure_07() not ok', sys.exc_info())
 
 
             try:
                 fig = self.plot_figure_08(cells)
                 fig.savefig(os.path.join(self.savefolder,
                                          'figure_08.pdf'), dpi=150)
-                print 'plot_figure_08() ok'
+                print('plot_figure_08() ok')
                 plt.close(fig)
             except:
-                print 'plot_figure_08() not ok', sys.exc_info()
+                print('plot_figure_08() not ok', sys.exc_info())
 
 
             try:
                 fig = self.plot_figure_09(cells)
                 fig.savefig(os.path.join(self.savefolder,
                                          'figure_09.pdf'), dpi=150)
-                print 'plot_figure_09() ok'
+                print('plot_figure_09() ok')
                 plt.close(fig)
             except:
-                print 'plot_figure_09() not ok', sys.exc_info()
+                print('plot_figure_09() not ok', sys.exc_info())
 
             
             #try:
@@ -263,10 +269,10 @@ class plotBenchmarkData(object):
             try:
                 fig = self.plot_figure_11(cells=cells)
                 fig.savefig(os.path.join(self.savefolder, 'figure_11.pdf'), dpi=150)
-                print 'plot_figure_11() ok'
+                print('plot_figure_11() ok')
                 plt.close(fig)
             except:
-                print 'plot_figure_11() not ok', sys.exc_info()
+                print('plot_figure_11() not ok', sys.exc_info())
 
                     
             try:
@@ -276,20 +282,20 @@ class plotBenchmarkData(object):
                     fig = self.plot_figure_12(cellindices)
                 fig.savefig(os.path.join(self.savefolder, 'figure_12.pdf'),
                             dpi=150)
-                print 'plot_figure_12() ok'
+                print('plot_figure_12() ok')
                 plt.close(fig)
             except:
-                print 'plot_figure_12() not ok'
+                print('plot_figure_12() not ok')
             
                 
             try:
                 fig = self.plot_population()
                 fig.savefig(os.path.join(self.savefolder, 'population.pdf'),
                             dpi=150)
-                print 'plotPopulation() ok'
+                print('plotPopulation() ok')
                 plt.close(fig)
             except:
-                print 'plotPopulation() not ok', sys.exc_info()
+                print('plotPopulation() not ok', sys.exc_info())
 
 
         #resync MPI ranks
@@ -1221,7 +1227,7 @@ class plotBenchmarkData(object):
             
             
             if cellindices.size <= 1:
-                print 'can not plot correlations for population of size <= 1'
+                print('can not plot correlations for population of size <= 1')
             else:
                 #compute correlation coefficients:
                 correlationsEx = np.corrcoef(histEx)
@@ -1491,7 +1497,7 @@ class plotBenchmarkData(object):
                             edgecolor=self.colors[cellkey],
                             )
                 except:
-                    print 'not enough spikes for ISI'
+                    print('not enough spikes for ISI')
                 ax.semilogx()
                 ax.set_title(r'cell %i, %i APs' % (cellkey+1, cell.AP_train[TRANSIENT:].sum()))
                 ax.axis(ax.axis('tight'))
@@ -1526,7 +1532,7 @@ class plotBenchmarkData(object):
         
         
             if len(cells.keys()) <= 1:
-                print 'can not plot correlations for population size <= 1'
+                print('can not plot correlations for population size <= 1')
             else:
                 # plot Ecker et al correlations
                 # load spikes
@@ -1989,7 +1995,7 @@ class plotBenchmarkData(object):
         sp_waves, clust_idx, sp_win = self.get_sp_waves(filename=os.path.join(self.savefolder,
                                                                             'ViSAPy_filterstep_1.h5'))
         if sp_waves['data'].shape[1] <= 1:
-            raise Exception, 'cant compute PCA for a single extracted spike'
+            raise Exception('cant compute PCA for a single extracted spike')
             
         
         #extract waveforms and features
@@ -2395,7 +2401,7 @@ class plotBenchmarkData(object):
             templates = sp_waves['data'][:, clust_idx==cellindex, :].mean(axis=1)
             t = np.arange(templates.shape[0]) * TD.cellParameters['dt']
             
-            print templates.min(), templates.max()
+            print(templates.min(), templates.max())
         
             #superimpose voltage trace at location of each contact
             xy = zip(TD.paramsMapping['elec_x'], TD.paramsMapping['elec_y'])
@@ -2463,7 +2469,7 @@ class plotBenchmarkData(object):
             fun = lambda X: (abs(np.log(morefun(X)) - np.log(xr[r <= r_cutoff]))).sum()
 
             res = minimize(fun, x0=[30., 1.], method='BFGS',)
-            print 'BFGS', res.x
+            print('BFGS', res.x)
             
             ax2.plot(r[r <= r_cutoff], morefun(res.x), 'k',
                      label=r'$\exp(-r/%.3f) - %.3f$' % (res.x[0], res.x[1]))
@@ -2493,7 +2499,7 @@ class plotBenchmarkData(object):
                         edgecolor=colors[np.where(cellindices==cellindex)[0]],
                         )
             except:
-                print 'not enough spikes for ISI'
+                print('not enough spikes for ISI')
         
         ax3.semilogx()
         ax3.axis(ax3.axis('tight'))

@@ -7,8 +7,7 @@ import neuron
 import h5py
 import scipy.signal as ss
 from scipy.sparse import lil_matrix
-from scipy.sparse.linalg import svds
-from ViSAPy import CorrelatedNoise, GDF, DriftCell
+from ViSAPy import GDF, DriftCell
 from matplotlib import cm
 from mpi4py import MPI
 
@@ -143,8 +142,8 @@ class BenchmarkData(object):
         self.TEMPLATEOFFS = TEMPLATEOFFS
         self.spikethreshold = spikethreshold
         if default_h5_file.find('%.') <= 0 or default_h5_file.find('.h5') <= 0:
-            raise Exception, "%s must include '%.3i' and file-ending '.h5'" % \
-                                default_h5_file
+            raise Exception("%s must include '%.3i' and file-ending '.h5'" % 
+                                default_h5_file)
         else:
             self.default_h5_file = default_h5_file
         
@@ -284,14 +283,14 @@ class BenchmarkData(object):
                     f[attrbt] = str(getattr(cell, attrbt))
             
             
-            print 'SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
+            print('SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
                         f['LFP'].value.min() if 'LFP' in f.keys() else f['electrode000'].value.min(),
-                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max())
+                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max()))
             
             f.close()
             
-            print 'Cell %s saved to file' % cellindex
+            print('Cell %s saved to file' % cellindex)
 
     
     def set_pop_soma_pos(self):
@@ -605,7 +604,7 @@ class BenchmarkData(object):
     
             j += 1
             if j == 1000:
-                raise Exception, 'after %i iters, can not position somas' % j
+                raise Exception('after %i iters, can not position somas' % j)
             
         soma_pos = []
         for i in range(self.POPULATION_SIZE):
@@ -637,7 +636,7 @@ class BenchmarkData(object):
         i = 0
         for cell in cells.itervalues():
             AP_train_sparse[i, cell.AP_train.nonzero()[0]] = 1
-            print '.',
+            print('.'),
             i += 1
         
         #reworking AP-train to work with page
@@ -667,7 +666,7 @@ class BenchmarkData(object):
             lfp += cell.LFP.value
             #close file object
             cell.f.close()
-            print '.',
+            print('.'),
         
         return lfp
 
@@ -746,7 +745,7 @@ class BenchmarkData(object):
         for cell in cells.itervalues():
             somavs[i, ] = cell.somav
             i += 1
-            print '.',
+            print('.'),
 
         return somavs
         
@@ -800,7 +799,7 @@ class BenchmarkData(object):
             
             #cells = self.read_lfp_AP_trains_cell_files()
             cells = self.read_lfp_cell_files(cellindices)
-            print 'cells ok'
+            print('cells ok')
             
             #remove vmem, imem if they exist, they are not needed here
             for cell in cells.itervalues():
@@ -812,14 +811,14 @@ class BenchmarkData(object):
         
             #calculate lfp from all cell contribs
             lfp = self.calc_lfp_el_pos(cells)    
-            print 'lfp ok'
+            print('lfp ok')
             
             #gather action potentials from all cells
             AP_trains = self.calc_AP_trains(cells)
-            print 'AP_trains ok'
+            print('AP_trains ok')
             
             somavs = self.calc_somavs(cells)
-            print 'soma potentials ok'
+            print('soma potentials ok')
             
             
             f = h5py.File(self.savefolder + '/ViSAPy_somatraces.h5', 'w')
@@ -827,7 +826,7 @@ class BenchmarkData(object):
             #f['data'] = somavs
             f['srate'] = int(1000 / self.cellParameters['dt'])
             f.close()
-            print 'save somatraces ok'
+            print('save somatraces ok')
             
             #saving
             f = h5py.File(self.savefolder + '/ViSAPy_noiseless.h5', 'w')
@@ -839,14 +838,14 @@ class BenchmarkData(object):
             grp['y'] = self.electrodeParameters['y']
             grp['z'] = self.electrodeParameters['z']
             f.close()
-            print 'save lfp ok'
+            print('save lfp ok')
             
             #add noise to all channels
             f = h5py.File(os.path.join(self.savefolder,
                                        'ViSAPy_noise.h5'), 'r')
             lfp += f['data'].value[:lfp.shape[0], :lfp.shape[1]]
             f.close()
-            print 'noise ok'
+            print('noise ok')
 
         
             
@@ -876,7 +875,7 @@ class BenchmarkData(object):
             grp['y'] = self.electrodeParameters['y']
             grp['z'] = self.electrodeParameters['z']
             f.close()
-            print 'save noisy lfp ok'
+            print('save noisy lfp ok')
     
             i = 0
             #looping over filters, and writing data, numbered
@@ -892,7 +891,7 @@ class BenchmarkData(object):
                 grp['y'] = self.electrodeParameters['y']
                 grp['z'] = self.electrodeParameters['z']
                 f.close()
-                print 'save lfp filter %i ok' % i
+                print('save lfp filter %i ok' % i)
                 i += 1
                 
                             
@@ -900,7 +899,7 @@ class BenchmarkData(object):
             np.savetxt(os.path.join(self.savefolder,
                                     'ViSAPy_ground_truth.gdf'),
                        AP_trains, fmt='%i')
-            print 'save ground truth all cells ok'
+            print('save ground truth all cells ok')
             
 
             try:
@@ -913,7 +912,7 @@ class BenchmarkData(object):
                     else:
                         pass
                 AP_trains_threshold = np.array(AP_trains_threshold)
-                print 'thresholded AP_trains ok'
+                print('thresholded AP_trains ok')
                 
                 np.savetxt(os.path.join(self.savefolder,
                                         'ViSAPy_ground_truth_threshold.gdf'),
@@ -1140,7 +1139,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 #dummy-membrane currents and tvec:
                 cell.imem = np.eye(cell.totnsegs)
                 cell.tvec = np.arange(cell.totnsegs)*cell.dt
-                print 'calculating dot-prod coefficients',
+                print('calculating dot-prod coefficients'),
                 for i in range(driftCount):
                     elParameters = self.electrodeParameters.copy()
                     elParameters['z'] += i * self.driftParameters['driftShift']
@@ -1148,12 +1147,12 @@ class BenchmarkDataLayer(BenchmarkData):
                     tempelectrode =LFPy.RecExtElectrode(cell, **elParameters)
                     tempelectrode.calc_lfp()
                     dotprodcoeffs.append(tempelectrode.LFP)
-                    print '.',
+                    print('.'),
                     
                 dotprodcoeffs = np.array(dotprodcoeffs)
                 #del dummy variables
                 del cell.imem, cell.tvec
-                print 'done'
+                print('done')
             else:
                 pass
 
@@ -1225,14 +1224,14 @@ class BenchmarkDataLayer(BenchmarkData):
                         warnings.warn('Could not find %s in cell' % attrbt)
 
             #print some stuff
-            print 'SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
+            print('SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
                         f['LFP'].value.min() if 'LFP' in f.keys() else f['electrode000'].value.min(),
-                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max())
+                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max()))
 
             f.close()
             
-            print 'Cell %s saved to file' % cellindex
+            print('Cell %s saved to file' % cellindex)
     
     
     def insert_synapses(self, cell, synparams, idx,
@@ -1258,8 +1257,8 @@ class BenchmarkDataLayer(BenchmarkData):
                 path to database file with spikes
         
         '''
-        print 'inserting %i synsapses, TSA : %.3f ' % \
-                (idx.size, cell.area[cell.get_idx(synparams['section'])].sum())
+        print('inserting %i synsapses, TSA : %.3f ' % \
+                (idx.size, cell.area[cell.get_idx(synparams['section'])].sum()))
         
         #NEURON complain about this one
         del synparams['nPerArea'], synparams['section']
@@ -1359,9 +1358,9 @@ class BenchmarkDataLayer(BenchmarkData):
                 cellParameters.update({'pt3d' : False})
             
                
-            print 'find synaptic placements.', 
+            print('find synaptic placements.'), 
             for cellindex in range(self.POPULATION_SIZE):
-                print '.',
+                print('.'),
                 cellParameters = dict(self.cellParameters)
                 cellParameters.update(dict(
                     morphology = self.shuffled_morphologies[cellindex],
@@ -1391,7 +1390,7 @@ class BenchmarkDataLayer(BenchmarkData):
                                                               nidx=n))
                 
                 
-            print '.'
+            print('.')
         else:
             syn_idx_ex = None
             syn_idx_in = None
@@ -1519,7 +1518,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
                     distEx += self.loc_EX[i]
                     distEx[distEx < -np.pi] += np.pi*2
                 else:
-                    raise ValueError, 'randdist not vonmises() or rand()'
+                    raise ValueError('randdist not vonmises() or rand()')
                 #normalize to network population indices
                 distEx /= 2*np.pi
                 distEx += 0.5
@@ -1541,7 +1540,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
                     distIn += self.loc_IN[i]
                     distIn[distIn < -np.pi] += np.pi*2
                 else:
-                    raise ValueError, 'randdist not vonmises() or rand()'
+                    raise ValueError('randdist not vonmises() or rand()')
                 #normalize to network population indices
                 distIn /= 2*np.pi
                 distIn += 0.5
