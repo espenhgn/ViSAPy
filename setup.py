@@ -46,6 +46,6 @@ setup(
         'Development Status :: 4 - Beta',
         ],
     requires = [
-        'numpy', 'scipy', 'matplotlib', 'neuron', 'Cython', 'h5py', 'mpi4py', 'sqlite3',
+        'numpy', 'scipy', 'matplotlib', 'neuron', 'Cython', 'h5py', 'mpi4py', 'sqlite3', 'LFPy'
         ]
 )

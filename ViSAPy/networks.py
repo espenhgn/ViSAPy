@@ -16,11 +16,10 @@ else:
 import h5py
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-import scipy.signal as ss
 import nest
 from mpi4py import MPI
 from nest import topology
-from ViSAPy import GDF, CorrelatedNoise, NonStationaryPoisson
+from ViSAPy import GDF, NonStationaryPoisson
 
 
 #set some plot attributes

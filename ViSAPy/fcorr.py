@@ -5,13 +5,12 @@ Using log-gabor filter bank to mimic noise correlation structure of data.
 [TODO] We don't reproduce highest frequency band
 '''
 import numpy as np
-from scipy.signal import lfilter, resample, freqz, filtfilt, butter
+from scipy.signal import lfilter, resample, filtfilt, butter
 from scipy.fftpack import ifft, fft, fftshift, fftfreq
 from scipy.ndimage import map_coordinates
 import matplotlib.pyplot as plt
 import h5py
 import os
-import sys
 import glob
 from .spike_a_cut import SpikeACut
 from scipy.interpolate import interp1d

@@ -106,17 +106,10 @@ locally in the user's Python environment issuing the commands:              ::
     python setup.py install --user
 
 However, as the user may want to modify or contribute to ViSAPy one can build
-extension modules inplace and link the /path/to/ViSAPy to the PYTHONPATH
-environment variable:                                                       ::
+extension modules inplace:                                                    ::
     
     cd ViSAPy
-    python setup.py build_ext -i
-
-
-Then, on linux, unix or OSX operating systems edit the .bashrc or .profile file
-located in your home folder to include the line:                            ::
-
-    export PYTHONPATH=/path/to/ViSAPy/:$PYTHONPATH
+    python setup.py develop --user
 
 
 Documentation
