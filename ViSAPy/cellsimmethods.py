@@ -242,7 +242,7 @@ class BenchmarkData(object):
         if return_just_cell:
             return cell
         else:
-            if self.simulationParameters.has_key('to_file'):
+            if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:
                     cell.simulate(electrode,
                                   file_name=os.path.join(self.savefolder,
@@ -266,7 +266,7 @@ class BenchmarkData(object):
                                 self.default_h5_file) % (cellindex),
                           'a')
             
-            if self.simulationParameters.has_key('to_file'):
+            if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:
                     f['LFP'] = f['electrode000']
 
@@ -549,7 +549,7 @@ class BenchmarkData(object):
         X = self.populationParameters['X']
         Y = self.populationParameters['Y']
         Z = self.populationParameters['Z']
-        if self.populationParameters.has_key('killzone'):
+        if 'killzone' in self.populationParameters.keys():
             killzone = self.populationParameters['killzone']
         else:
             killzone = 0.
@@ -631,10 +631,10 @@ class BenchmarkData(object):
             np.ndarray, first column is cell id, second column spike time index
         
         '''
-        AP_train_sparse =  lil_matrix((np.size(cells.keys()),
-                            cells[cells.keys()[0]].AP_train.size), dtype=bool)
+        AP_train_sparse =  lil_matrix((len(cells.keys()),
+                            cells[list(cells.keys())[0]].AP_train.size), dtype=bool)
         i = 0
-        for cell in cells.itervalues():
+        for cell in cells.values():
             AP_train_sparse[i, cell.AP_train.nonzero()[0]] = 1
             print('.'),
             i += 1
@@ -661,8 +661,8 @@ class BenchmarkData(object):
                 method read_lfp_cell_files() indexed by cellindex
                 starting at zero
         '''
-        lfp = np.zeros(cells[cells.keys()[0]].LFP.value.shape, dtype='float32')
-        for cell in cells.itervalues():
+        lfp = np.zeros(cells[list(cells.keys())[0]].LFP.value.shape, dtype='float32')
+        for cell in cells.values():
             lfp += cell.LFP.value
             #close file object
             cell.f.close()
@@ -697,7 +697,7 @@ class BenchmarkData(object):
                                         (cellindex), 'r+')
             print(os.path.join(self.savefolder,
                                self.default_h5_file) % (cellindex))
-            for k in f.iterkeys():
+            for k in f.keys():
                 if k in ['LFP', 'electrode000']:
                     setattr(cells[cellindex], 'LFP', f[k])
                 else:
@@ -713,7 +713,7 @@ class BenchmarkData(object):
             
         
         #recalculate AP_trains:
-        for cell in cells.itervalues():
+        for cell in cells.values():
             setattr(cell, 'AP_train', self.return_spiketrains(cell.somav))
                 
         
@@ -738,11 +738,11 @@ class BenchmarkData(object):
             np.ndarray, somatic voltages of each cell
         '''
         somavs = np.zeros((len(cells.keys()),
-                           cells[cells.keys()[0]].somav.size),
+                           cells[list(cells.keys())[0]].somav.size),
             dtype='float32')
         
         i = 0
-        for cell in cells.itervalues():
+        for cell in cells.values():
             somavs[i, ] = cell.somav
             i += 1
             print('.'),
@@ -802,7 +802,7 @@ class BenchmarkData(object):
             print('cells ok')
             
             #remove vmem, imem if they exist, they are not needed here
-            for cell in cells.itervalues():
+            for cell in cells.values():
                 if hasattr(cell, 'vmem'):
                     del cell.vmem
                 if hasattr(cell, 'imem'):
@@ -1157,7 +1157,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 pass
 
             if self.driftParameters is not None:
-                if self.simulationParameters.has_key('to_file'):
+                if 'to_file' in self.simulationParameters.keys():
                     if self.simulationParameters['to_file']:
                         cell.simulate(file_name=os.path.join(self.savefolder,
                                             self.default_h5_file) % (cellindex),
@@ -1175,7 +1175,7 @@ class BenchmarkDataLayer(BenchmarkData):
                                 **self.simulationParameters)
                     cell.LFP = cell.dotprodresults
             else:
-                if self.simulationParameters.has_key('to_file'):
+                if 'to_file' in self.simulationParameters.keys():
                     if self.simulationParameters['to_file']:
                         cell.simulate(electrode,
                                       file_name=os.path.join(self.savefolder,
@@ -1199,7 +1199,7 @@ class BenchmarkDataLayer(BenchmarkData):
                                 self.default_h5_file) % (cellindex),
                           mode='r+')
             
-            if self.simulationParameters.has_key('to_file'):
+            if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:
                     f['LFP'] = f['electrode000']
                     del f['electrode000']
