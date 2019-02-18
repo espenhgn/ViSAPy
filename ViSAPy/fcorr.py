@@ -351,7 +351,7 @@ class NoiseFeatures(LogBumpFilterBank):
         f = h5py.File(self.outputfile)
         for attribute in ['input_data', 'psd', 'freqs', 'fdata', 'C']:
             try:
-                setattr(self, attribute, f[attribute].value)
+                setattr(self, attribute, f[attribute][()])
             except:
                 f.close()
                 self._load_data()
@@ -374,7 +374,7 @@ class NoiseFeatures(LogBumpFilterBank):
         '''
         if self.fname.endswith('h5'):
             h5 = h5py.File(self.fname, 'r')
-            self.input_data = h5['data'].value
+            self.input_data = h5['data'][()]
             h5.close()
         elif self.fname.endswith('npy'):
             self.input_data = np.load(self.fname)

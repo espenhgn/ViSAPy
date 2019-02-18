@@ -5,14 +5,14 @@ tetrode recording
 '''
 #import modules
 import uuid
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import zipfile
 import numpy as np
 import h5py
 import os
 import glob
 #workaround for plots on cluster
-if not os.environ.has_key('DISPLAY'):
+if 'DISPLAY' not in os.environ:
     import matplotlib
     matplotlib.use('Agg')
 from scipy.signal import filtfilt, butter, lfilter
@@ -61,7 +61,7 @@ savefolder = COMM.bcast(savefolder, root=0)
 if not os.path.isfile('L5bPCmodelsEH/morphologies/cell1.asc'):
     if RANK == 0:
         #get the model files:
-        u = urllib2.urlopen('http://senselab.med.yale.edu/ModelDB/' +
+        u = urllib.request.urlopen('http://senselab.med.yale.edu/ModelDB/' +
                             'eavBinDown.asp?o=139653&a=23&mime=application/zip')
         localFile = open('L5bPCmodelsEH.zip', 'w')
         localFile.write(u.read())
@@ -94,10 +94,9 @@ cellParameters = {
     'v_init' : -80,
     'passive' : False,
     'nsegs_method' : None,
-    'timeres_NEURON' : 2**-5,
-    'timeres_python' : 2**-5,
-    'tstartms' : 0.,
-    'tstopms' : 120500, #2 minutes without 500 ms startup transient
+    'dt' : 2**-5,
+    'tstart' : 0.,
+    'tstop' : 120500, #2 minutes without 500 ms startup transient
     'verbose' : False,
     'pt3d' : False,
 }
@@ -152,7 +151,7 @@ populationParameters = {
 #first contact superficial
 x, y, z = -np.mgrid[0:1, 0:1, -15:1] * 50
 N = np.empty((x.size, 3))
-for i in xrange(N.shape[0]): N[i,] = [1, 0, 0]
+for i in range(N.shape[0]): N[i,] = [1, 0, 0]
 
 #dictionary passed to class LFPy.RecExtElectrode
 electrodeParameters = {
@@ -163,7 +162,7 @@ electrodeParameters = {
     'N' : N,            #electrode contact surface normal
     'r' : 7.5,          #contact radius
     'n' : 100,          #number of points averaged over on contact
-    'method' : 'som_as_point'   #soma segment assumed spherical, dendrites lines
+    'method' : 'soma_as_point'   #soma segment assumed spherical, dendrites lines
 }
 
 ##one dimensional drift, here; shifting electrode.z +5 mum every 1000 ms
@@ -199,8 +198,8 @@ synparams_GABA_A = {         #Inhibitory synapse parameters
 #parameters for ViSAPy.*Network instance
 networkParameters = {
     #class Network
-    'simtime' :     cellParameters['tstopms']-cellParameters['tstartms'],
-    'dt' :          cellParameters['timeres_NEURON'],
+    'simtime' :     cellParameters['tstop']-cellParameters['tstart'],
+    'dt' :          cellParameters['dt'],
     'total_num_virtual_procs' : SIZE,
     'savefolder' :  savefolder,
     'label' :       'spikes',
@@ -218,7 +217,7 @@ networkParameters = {
 }
 #class ExternalNoiseRingNetwork we're using below need a few extra arguments
 ExternalNoiseRingNetworkParameters = {
-    'tstopms' :         cellParameters['tstopms'],
+    'tstop' :         cellParameters['tstop'],
     'invertnoise_ex' :  True,
     'invertnoise_in' :  False,
     'rate' :            40,
@@ -228,7 +227,7 @@ ExternalNoiseRingNetworkParameters = {
 
 
 #nyquist frequency of simulation output
-nyquist = 1000. / cellParameters['timeres_python'] / 2 
+nyquist = 1000. / cellParameters['dt'] / 2 
 
 
 #Parameters for class ViSAPy.LogBumpFilterBank that sets up
@@ -265,7 +264,7 @@ if RANK == 0:
     if not os.path.isdir('data'):
         os.mkdir('data')
     if not os.path.isfile(fname):
-        u = urllib2.urlopen('https://www.dropbox.com/s/sttueav1fs18esz/' +
+        u = urllib.request.urlopen('https://www.dropbox.com/s/sttueav1fs18esz/' +
                             '08_2012101909.bin_raw_cleaned.h5?dl=1')
         f = open(fname, 'w')
         f.write(u.read())
@@ -343,7 +342,7 @@ if not os.path.isfile(noise_output_file):
                                       amplitude_scaling=1.,
                                       savefolder=savefolder,
                                       **logBumpParameters)
-    noise = noise_generator.correlated_noise(T = cellParameters['tstopms'])
+    noise = noise_generator.correlated_noise(T = cellParameters['tstop'])
     #file object containing extracellular noise and related data
     if RANK == 0:
         f = h5py.File(noise_output_file)
@@ -384,8 +383,8 @@ if not os.path.isfile(os.path.join(savefolder, 'SpTimesEx.db')) \
     and not os.path.isfile(os.path.join(savefolder, 'SpTimesIn.db')):
     #create an instance of our network
     networkInstance = ExternalNoiseRingNetwork(lambda_t=lambda_t,
-                                **{k : v for k, v in networkParameters.items() +
-                                   ExternalNoiseRingNetworkParameters.items()})
+                                **{k : v for k, v in list(networkParameters.items()) +
+                                   list(ExternalNoiseRingNetworkParameters.items())})
     networkInstance.run()
     networkInstance.get_results()
     networkInstance.process_gdf_files()
@@ -429,7 +428,7 @@ benchmark_data = BenchmarkDataRing(
     synapseParametersEx = synparams_AMPA,
     synapseParametersIn = synparams_GABA_A,
     driftParameters = driftParameters)
-print 'setup ok!'
+print('setup ok!')
 #run simulations and gather results
 benchmark_data.run()
 benchmark_data.collect_data()
@@ -453,10 +452,10 @@ plot_time = time() - tic
 ## print out some stats.
 
 if RANK == 0:
-    print '\nsimulation times:\n'
-    print 'setup: \t\t%.1f seconds' % setup_time
-    print 'noise: \t\t%.1f seconds' % noise_time
-    print 'network: \t%.1f seconds' % network_time
-    print 'benchmark: \t%.1f seconds' % bench_time
-    print 'plots: \t\t%.1f seconds\n' % plot_time
+    print('\nsimulation times:\n')
+    print('setup: \t\t%.1f seconds' % setup_time)
+    print('noise: \t\t%.1f seconds' % noise_time)
+    print('network: \t%.1f seconds' % network_time)
+    print('benchmark: \t%.1f seconds' % bench_time)
+    print('plots: \t\t%.1f seconds\n' % plot_time)
 

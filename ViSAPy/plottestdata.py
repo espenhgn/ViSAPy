@@ -78,7 +78,7 @@ def normalfun(x, xdata):
 
 def remove_axis_junk(ax, which=['right', 'top']):
     '''remove upper and right axis'''
-    for loc, spine in ax.spines.iteritems():
+    for loc, spine in ax.spines.items():
         if loc in which:
             spine.set_color('none')            
     ax.xaxis.set_ticks_position('bottom')
@@ -195,7 +195,7 @@ class plotBenchmarkData(object):
             print('cells ok')
 
             #remove vmem, imem if they exist, they are not needed here
-            for cell in cells.itervalues():
+            for cell in cells.values():
                 if hasattr(cell, 'vmem'):
                     del cell.vmem
                 if hasattr(cell, 'imem'):
@@ -213,7 +213,7 @@ class plotBenchmarkData(object):
             
             
             #calculate some AP_trains
-            for cell in cells.itervalues():
+            for cell in cells.values():
                 setattr(cell, 'AP_train',
                         self.testdInst.return_spiketrains(cell.somav))
 
@@ -225,8 +225,8 @@ class plotBenchmarkData(object):
                 plt.close(fig)
             except:
                 print('plot_figure_02() not ok', sys.exc_info())
-
-
+    
+    
             try:
                 fig = self.plot_figure_07()
                 fig.savefig(os.path.join(self.savefolder, 'figure_07.pdf'),
@@ -235,8 +235,8 @@ class plotBenchmarkData(object):
                 plt.close(fig)
             except:
                 print('plot_figure_07() not ok', sys.exc_info())
-
-
+    
+    
             try:
                 fig = self.plot_figure_08(cells)
                 fig.savefig(os.path.join(self.savefolder,
@@ -245,8 +245,8 @@ class plotBenchmarkData(object):
                 plt.close(fig)
             except:
                 print('plot_figure_08() not ok', sys.exc_info())
-
-
+    
+    
             try:
                 fig = self.plot_figure_09(cells)
                 fig.savefig(os.path.join(self.savefolder,
@@ -389,12 +389,12 @@ class plotBenchmarkData(object):
         #get some traces
         f = h5py.File(self.savefolder + '/ViSAPy_filterstep_0.h5',
                       'r')
-        lfp_noisy = f['data'].value.T[:, tinds]
+        lfp_noisy = f['data'][()].T[:, tinds]
         f.close()
         
         #load the extracellular noise:
         f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'))
-        noise = f['data'].value[:, tinds]
+        noise = f['data'][()][:, tinds]
         f.close()
         
         
@@ -423,7 +423,7 @@ class plotBenchmarkData(object):
         ax0.axis('tight')
         ax0.set_yticks(yticks)
         ax0.set_yticklabels(yticklabels)
-        for loc, spine in ax0.spines.iteritems():
+        for loc, spine in ax0.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax0.yaxis.set_ticks_position('left')
@@ -451,7 +451,7 @@ class plotBenchmarkData(object):
         #compute binned spike trains and corresponding correlation
         
         j = 0
-        for i, cell in cells.iteritems():
+        for i, cell in cells.items():
             xe = np.array([])
             ye = np.array([])
             spiketimes = db.select_neurons_interval(self.testdInst.SpCellsEx[i][::50], T=T)
@@ -473,7 +473,7 @@ class plotBenchmarkData(object):
         db.close()
         del xe, ye
 
-        for loc, spine in ax44.spines.iteritems():
+        for loc, spine in ax44.spines.items():
             if loc in ['right','top']:
                 spine.set_color('none') # don't draw spine
         ax44.xaxis.set_ticks_position('bottom')
@@ -507,7 +507,7 @@ class plotBenchmarkData(object):
         yticklabels = []
         
         j = 0
-        for i, cell in cells.iteritems():
+        for i, cell in cells.items():
             xi = np.array([])
             yi = np.array([])
             spiketimes = db.select_neurons_interval(self.testdInst.SpCellsIn[i][::50], T=T)
@@ -529,7 +529,7 @@ class plotBenchmarkData(object):
         db.close()
         del xi, yi
         
-        for loc, spine in ax45.spines.iteritems():
+        for loc, spine in ax45.spines.items():
             if loc in ['right','top']:
                 spine.set_color('none') # don't draw spine
         ax45.xaxis.set_ticks_position('bottom')
@@ -555,7 +555,7 @@ class plotBenchmarkData(object):
             aspect='equal', adjustable='datalim', frame_on=False)
         
         #plot cell schematics
-        for cellindex, cell in cells.iteritems():
+        for cellindex, cell in cells.items():
             x, y, z = schemPyr(cell, scale=0.35)
             ax6.fill(x, z, color=self.colors[cellindex], lw=2,
                     rasterized=False, zorder=cell.somapos[1])        
@@ -644,7 +644,7 @@ class plotBenchmarkData(object):
             yticklabels.append('ch. %i' % (i+1))
             i += 1
         
-        for loc, spine in ax4.spines.iteritems():
+        for loc, spine in ax4.spines.items():
             if loc in ['right', 'top',]:
                 spine.set_color('none')
         ax4.xaxis.set_ticks_position('bottom')
@@ -706,7 +706,7 @@ class plotBenchmarkData(object):
         yticks = []
         i = 0
         scale = 100
-        for cellkey, cell in cells.iteritems():
+        for cellkey, cell in cells.items():
             ax7.plot(tvec, cell.somav[tinds] - i*scale,
                 color = self.colors[cellkey],
                 alpha = self.alphas[cellkey],
@@ -717,7 +717,7 @@ class plotBenchmarkData(object):
             yticks.append(-i*scale)
             i += 1
         
-        for loc, spine in ax7.spines.iteritems():
+        for loc, spine in ax7.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax7.xaxis.set_ticks_position('bottom')
@@ -749,7 +749,7 @@ class plotBenchmarkData(object):
         yticklabels = []
         yticks = []
         i = 0
-        for cellkey, cell in cells.iteritems():
+        for cellkey, cell in cells.items():
             nan_train = cell.AP_train[tinds].astype(float)
             sptimes = np.where(nan_train == 1)[0]
             nan_train *= np.nan
@@ -765,7 +765,7 @@ class plotBenchmarkData(object):
             yticks.append(-i + 0.5)
             i += 1
         
-        for loc, spine in ax8.spines.iteritems():
+        for loc, spine in ax8.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax8.xaxis.set_ticks_position('bottom')
@@ -788,7 +788,7 @@ class plotBenchmarkData(object):
         
         
         #plot arrows here
-        ax = fig.add_axes([0, 0, 1, 1], axisbg='none', frame_on=False)
+        ax = fig.add_axes([0, 0, 1, 1], frame_on=False)
         
         fancy_arrow(ax, [0.25,  0.26, 0.26, 0.435, 0.435,  0.44],
                         [0.75, 0.75, 0.99,  0.99, 0.75, 0.75])
@@ -826,23 +826,23 @@ class plotBenchmarkData(object):
         ax.set_rasterization_zorder(1)
         yticks = []
         yticklabels = []
-        data = f['input_data'].value.T
+        data = f['input_data'][()].T
         tvec = np.arange(data.shape[1]) * self.testdInst.cellParameters['dt']
         #slice data and tvec and noise:
         if tvec[-1] > T[1]:
             data = data[:, (tvec <= T[1]) & (tvec >= T[0])]
             tvec = tvec[(tvec <= T[1]) & (tvec >= T[0])]
             
-        tvec_noise = np.arange(f['data'].value.shape[1]) * \
+        tvec_noise = np.arange(f['data'][()].shape[1]) * \
                     self.testdInst.cellParameters['dt'] +\
                     self.testdInst.cellParameters['tstart']
-        noise = f['data'].value[:, (tvec_noise <= T[1]) & (tvec_noise >= T[0])]
+        noise = f['data'][()][:, (tvec_noise <= T[1]) & (tvec_noise >= T[0])]
         
         
         scale = 0.25
         zips = []
         for i, trace in enumerate(data):
-            zips.append(zip(tvec, trace - i*scale))
+            zips.append(list(zip(tvec, trace - i*scale)))
             yticks.append(-i*scale)
             yticklabels.append('ch. %i' % (i+1))
 
@@ -862,7 +862,7 @@ class plotBenchmarkData(object):
         ax.set_xlabel(r'$t$ (ms)', labelpad=0.1)
         ax.set_yticks(yticks)
         ax.set_yticklabels(yticklabels)
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -879,20 +879,20 @@ class plotBenchmarkData(object):
         #PSDs from each channel
         ax = fig.add_axes([0.07, 0.55, 0.175, 0.125])
         ax.set_rasterization_zorder(1)
-        psd = f['psd'].value.mean(axis=1)
-        ax.loglog(f['freqs'].value[1:2**15] * 1000 /
+        psd = f['psd'][()].mean(axis=1)
+        ax.loglog(f['freqs'][()][1:2**15] * 1000 /
                   self.testdInst.cellParameters['dt'],
-                  psd[1:2**15]/np.sqrt(f['NFFT'].value / self.testdInst.cellParameters['dt']),
+                  psd[1:2**15]/np.sqrt(f['NFFT'][()] / self.testdInst.cellParameters['dt']),
                   color='k',
                   zorder=0,
                   rasterized=True,
                   )
         
         ax.axis(ax.axis('tight'))
-        ax.grid('on')
+        ax.grid(True)
         ax.set_ylabel(r'(mV$^2$/Hz)', ha='center', va='center')
         ax.set_title('PSD')
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -913,12 +913,12 @@ class plotBenchmarkData(object):
         basist = 1000 / (2 * self.testdInst.cellParameters['dt'])
         #from logbumps import logbumps
         logbases = fcorr.logbumps(n=f['C'].shape[0], t=basist,
-                        normalize=False, alpha=f['alpha'].value, debug=False,
+                        normalize=False, alpha=f['alpha'][()], debug=False,
                         figno='Logbumps')
 
         zips = []
         for i in range(f['C'].shape[0]):
-            zips.append(zip(np.arange(logbases[i].size)[1:], logbases[i][1:]))
+            zips.append(list(zip(np.arange(logbases[i].size)[1:], logbases[i][1:])))
             
         line_segments = LineCollection(zips,
                                        linewidths = (1),
@@ -943,13 +943,13 @@ class plotBenchmarkData(object):
 
         axcb.set_label('bump #')
         
-        ax.grid('on')
+        ax.grid(True)
         ax.axis(ax.axis('tight'))
         ax.set_xlim(20, basist)
         ax.set_ylabel('magnitude')
         ax.set_xlabel(r'$f$ (Hz)', labelpad=0.1)
         ax.set_title('filter basis')
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -982,7 +982,7 @@ class plotBenchmarkData(object):
         
         for i in range(f['C'].shape[0]):
             ax = fig.add_axes([x[i], y[i], width, height], frameon=False)
-            im = ax.matshow(f['C'].value[i, ], rasterized=True,
+            im = ax.matshow(f['C'][()][i, ], rasterized=True,
                             cmap = plt.cm.get_cmap('viridis', f['C'].shape[0]))
             rect = np.array(ax.get_position().bounds)
             rect[0] += rect[2]  #- 0.02
@@ -990,8 +990,8 @@ class plotBenchmarkData(object):
             cax = fig.add_axes(rect)
             cax.set_rasterization_zorder(1)
             cbar = fig.colorbar(im, cax=cax)
-            cbar.set_ticks([f['C'].value[i, ].min(), f['C'].value[i, ].max()])
-            cbar.set_ticklabels(['%.1e' % f['C'].value[i, ].min(), '%.1e' % f['C'].value[i, ].max()])
+            cbar.set_ticks([f['C'][()][i, ].min(), f['C'][()][i, ].max()])
+            cbar.set_ticklabels(['%.1e' % f['C'][()][i, ].min(), '%.1e' % f['C'][()][i, ].max()])
             ax.set_xticks([])
             ax.set_yticks([])
             ax.axis(ax.axis('tight'))
@@ -1019,7 +1019,7 @@ class plotBenchmarkData(object):
         tvec = np.arange(data.shape[1]) * self.testdInst.cellParameters['dt']
         zips = []
         for i, trace in enumerate(data):
-            zips.append(zip(tvec, trace - i*scale))
+            zips.append(list(zip(tvec, trace - i*scale)))
             yticks.append(-i*scale)
             yticklabels.append('ch. %i' % (i+1))
 
@@ -1041,7 +1041,7 @@ class plotBenchmarkData(object):
         ax.yaxis.set_ticks_position('left')
         ax.set_yticks(yticks)
         ax.set_yticklabels(yticklabels)
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax.set_title('model noise')
@@ -1135,7 +1135,7 @@ class plotBenchmarkData(object):
             del xe, ye
             
             
-            for loc, spine in ax4.spines.iteritems():
+            for loc, spine in ax4.spines.items():
                 if loc in ['right','top']:
                     spine.set_color('none') # don't draw spine
             ax4.xaxis.set_ticks_position('bottom')
@@ -1185,7 +1185,7 @@ class plotBenchmarkData(object):
             del xi, yi
             
             
-            for loc, spine in ax5.spines.iteritems():
+            for loc, spine in ax5.spines.items():
                 if loc in ['right','top']:
                     spine.set_color('none') # don't draw spine
             ax5.xaxis.set_ticks_position('bottom')
@@ -1362,7 +1362,7 @@ class plotBenchmarkData(object):
             yticklabels = []
             yticks = []
             i = 0
-            for cellkey, cell in cells.iteritems():
+            for cellkey, cell in cells.items():
                 tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['dt'],
                                   tstop / self.testdInst.cellParameters['dt'] + 1,
                                   dtype=int)
@@ -1378,7 +1378,7 @@ class plotBenchmarkData(object):
                 yticks.append(cell.somav[tinds].mean() - i*100)
                 i += 1
         
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top']:
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
@@ -1416,7 +1416,7 @@ class plotBenchmarkData(object):
             yticklabels = []
             yticks = []
             i = 0
-            for cellkey, cell in cells.iteritems():
+            for cellkey, cell in cells.items():
                 nan_train = cell.AP_train[tinds].astype(float)
                 sptimes = np.where(nan_train == 1)[0]
                 nan_train *= np.nan
@@ -1443,7 +1443,7 @@ class plotBenchmarkData(object):
         
         
         
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top']:
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
@@ -1484,7 +1484,7 @@ class plotBenchmarkData(object):
             y = y[::-1]
             
         
-            for i, (cellkey, cell) in enumerate(cells.iteritems()):
+            for i, (cellkey, cell) in enumerate(cells.items()):
                 TRANSIENT = int(self.TRANSIENT / cell.dt)
                 ISI_tvec = np.arange(cell.somav[TRANSIENT:].size) * cell.dt
                 ISI = np.diff(ISI_tvec[cell.AP_train[TRANSIENT:]==1])
@@ -1511,7 +1511,7 @@ class plotBenchmarkData(object):
                 ax.xaxis.set_ticks_position('bottom')
                 ax.yaxis.set_ticks_position('left')
         
-                for loc, spine in ax.spines.iteritems():
+                for loc, spine in ax.spines.items():
                     if loc in ['right', 'top']:
                         spine.set_color('none')
                 
@@ -1540,7 +1540,7 @@ class plotBenchmarkData(object):
                 db.create(re=os.path.join(self.savefolder,
                                           'ViSAPy_ground_truth.gdf'))
                 
-                cellindices = cells.keys()
+                cellindices = list(cells.keys())
                 neurons = np.array(cellindices) + 1
                 N = len(neurons)
                 
@@ -1615,17 +1615,17 @@ class plotBenchmarkData(object):
         
         #load some traces
         f = h5py.File(self.savefolder + '/ViSAPy_noiseless.h5', 'r')
-        lfp_noiseless = f['data'].value.T[:, tinds]
+        lfp_noiseless = f['data'][()].T[:, tinds]
         f.close()
         
         f = h5py.File(self.savefolder + '/ViSAPy_filterstep_0.h5',
                       'r')
-        lfp_noisy = f['data'].value.T[:, tinds]
+        lfp_noisy = f['data'][()].T[:, tinds]
         f.close()
         
         f = h5py.File(self.savefolder + '/ViSAPy_filterstep_1.h5',
                       'r')
-        lfp_filtered = f['data'].value.T[:, tinds]
+        lfp_filtered = f['data'][()].T[:, tinds]
         f.close()
         
         #plotting figure
@@ -1654,7 +1654,7 @@ class plotBenchmarkData(object):
         
         axis = ax.axis(ax.axis('tight'))
         
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top',]:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -1687,7 +1687,7 @@ class plotBenchmarkData(object):
         
         axis=ax.axis(ax.axis('tight'))
         
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top',]:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -1727,7 +1727,7 @@ class plotBenchmarkData(object):
         
         axis=ax.axis(ax.axis('tight'))
         
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top',]:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -1798,7 +1798,7 @@ class plotBenchmarkData(object):
                 for i in range(self.testdInst.electrodeParameters['x'].size):
                     if sp_waves['data'][:, clust_idx==cellkey, i].shape[1] > 0:
                         for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
-                            zips.append(zip(xvec, x - i*scale))
+                            zips.append(list(zip(xvec, x - i*scale)))
                         
                         ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
                                  color='k', lw=2, clip_on=False, zorder=2)
@@ -1815,7 +1815,7 @@ class plotBenchmarkData(object):
                                                 zorder=0)    
                 ax.add_collection(linecollection)
         
-                for loc, spine in ax.spines.iteritems():
+                for loc, spine in ax.spines.items():
                     if loc in ['right', 'top',]:
                         spine.set_color('none')
                 ax.xaxis.set_ticks_position('bottom')
@@ -1860,7 +1860,7 @@ class plotBenchmarkData(object):
         
             #set lims in some 100 ms bin where number of spikes is maxed
             AP_trains = []
-            for cell in cells.itervalues():
+            for cell in cells.values():
                 AP_trains.append(cell.AP_train)
             AP_trains = np.array(AP_trains)
             AP_trains = AP_trains.sum(axis=0)
@@ -1889,7 +1889,7 @@ class plotBenchmarkData(object):
                 ax.plot(tvec, x - i*scale, label=None, color='k',
                          rasterized=True)
             
-            for cellindex, cell in cells.iteritems():
+            for cellindex, cell in cells.items():
                 nanmat = np.zeros(lfp_filtered.shape)*np.nan
                 spi = np.where(cell.AP_train[int(self.TRANSIENT /
                                                  self.testdInst.cellParameters['dt']):lfp_filtered.shape[1]] == 1)[0]
@@ -1922,7 +1922,7 @@ class plotBenchmarkData(object):
                         alpha=self.alphas[cellindex], rasterized=True)
             
             
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top']:
                     spine.set_color('none')
             
@@ -1979,9 +1979,9 @@ class plotBenchmarkData(object):
         ##load recording
         #f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_filterstep_1.h5'))
         #sp = {
-        #    'data' : f['data'].value.T.astype('float32'),
-        #    'FS' : f['srate'].value,
-        #    'n_contacts' : f['data'].value.shape[1],
+        #    'data' : f['data'][()].T.astype('float32'),
+        #    'FS' : f['srate'][()],
+        #    'n_contacts' : f['data'][()].shape[1],
         #}
         #f.close()
         
@@ -2066,7 +2066,7 @@ class plotBenchmarkData(object):
             ax.set_xticks([])
             ax.set_xticklabels([])
             ax.axis(ax.axis('tight'))
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top',]:
                     spine.set_color('none')
         
@@ -2082,7 +2082,7 @@ class plotBenchmarkData(object):
         ax = fig.add_subplot(211)
         yticklabels = []
         yticks = []
-        for i, (cellkey, cell) in enumerate(cells.iteritems()):
+        for i, (cellkey, cell) in enumerate(cells.items()):
             tinds = np.arange(self.TRANSIENT / self.testdInst.cellParameters['dt'],
                               tstop / self.testdInst.cellParameters['dt'] + 1,
                               dtype=int)
@@ -2108,7 +2108,7 @@ class plotBenchmarkData(object):
             #ax.text(1, 1, r'rate (s$^{-1}$)', fontsize=smallfontsize,
             #        transform=ax.transAxes)
 
-        for loc, spine in ax.spines.iteritems():
+        for loc, spine in ax.spines.items():
             if loc in ['right', 'top']:
                 spine.set_color('none')
         ax.xaxis.set_ticks_position('bottom')
@@ -2142,7 +2142,7 @@ class plotBenchmarkData(object):
         #load some traces
         f = h5py.File(self.savefolder + '/ViSAPy_filterstep_1.h5',
                       'r')
-        lfp_filtered = f['data'].value.T[:, tinds]
+        lfp_filtered = f['data'][()].T[:, tinds]
         f.close()
         
         #axis objects
@@ -2164,7 +2164,7 @@ class plotBenchmarkData(object):
         
         axis=ax3.axis(ax3.axis('tight'))
         
-        for loc, spine in ax3.spines.iteritems():
+        for loc, spine in ax3.spines.items():
             if loc in ['right', 'top',]:
                 spine.set_color('none')
         ax3.xaxis.set_ticks_position('bottom')
@@ -2239,7 +2239,7 @@ class plotBenchmarkData(object):
             for i in range(self.testdInst.electrodeParameters['x'].size):
                 if sp_waves['data'][:, clust_idx==cellkey, :].shape[1] > 0:
                     for j, x in enumerate(sp_waves['data'][:, clust_idx==cellkey, i].T):
-                        zips.append(zip(xvec, x - i*scale))
+                        zips.append(list(zip(xvec, x - i*scale)))
                         
                     ax.plot(xvec, sp_waves['data'][:, clust_idx==cellkey, i].mean(axis=1) - i*scale,
                              color='k', lw=1, clip_on=False, zorder=2)
@@ -2256,7 +2256,7 @@ class plotBenchmarkData(object):
                                             zorder=0)    
             ax.add_collection(linecollection)
     
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top',]:
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
@@ -2368,9 +2368,9 @@ class plotBenchmarkData(object):
         #load recording
         f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_filterstep_1.h5'))
         sp = {
-            'data' : f['data'].value.T.astype('float32'),
-            'FS' : f['srate'].value,
-            'n_contacts' : f['data'].value.shape[1],
+            'data' : f['data'][()].T.astype('float32'),
+            'FS' : f['srate'][()],
+            'n_contacts' : f['data'][()].shape[1],
         }
         f.close()
         
@@ -2389,7 +2389,7 @@ class plotBenchmarkData(object):
             cell = cells[cellindex]
             zips = []
             for x, y in cell.get_idx_polygons(projection=('x','y')):
-                zips.append(zip(x, y))        
+                zips.append(list(zip(x, y)))        
             polycol = PolyCollection(zips,
                                      edgecolors='none',
                                      facecolors=colors[np.where(cellindices==cellindex)[0]], #self.colors[cellindex],
@@ -2562,7 +2562,7 @@ class plotBenchmarkData(object):
         
         #schematic plot of the population
         xoffs = 300
-        for cellindex, cell in cells.iteritems():
+        for cellindex, cell in cells.items():
             ax.plot(cell.somapos[0] - xoffs, cell.somapos[2],
                     'o', color=self.colors[cellindex],
                     markeredgecolor=self.colors[cellindex],
@@ -2590,7 +2590,7 @@ class plotBenchmarkData(object):
         
         ax.plot(x, z, 'k', lw=1)
         
-        for cellindex, cell in cells.iteritems():
+        for cellindex, cell in cells.items():
             ax.plot(cell.somapos[0] - xoffs,
                     cell.somapos[1] + mpop['z_max'] + 2*mpop['radius'],
                     'o', color=self.colors[cellindex],
@@ -2625,10 +2625,10 @@ class plotBenchmarkData(object):
         
         
         #using the real morphologies 
-        for cellindex, cell in cells.iteritems():
+        for cellindex, cell in cells.items():
             zips = []
             for x, z in cell.get_idx_polygons():
-                zips.append(zip(x, z))
+                zips.append(list(zip(x, z)))
             polycol = PolyCollection(zips,
                                      edgecolors='none',
                                      color=self.colors[cellindex],
@@ -2664,9 +2664,9 @@ class plotBenchmarkData(object):
         #load recording
         f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_filterstep_1.h5'))
         sp = {
-            'data' : f['data'].value.T.astype('float32'),
-            'FS' : f['srate'].value,
-            'n_contacts' : f['data'].value.shape[1],
+            'data' : f['data'][()].T.astype('float32'),
+            'FS' : f['srate'][()],
+            'n_contacts' : f['data'][()].shape[1],
         }
         f.close()
         

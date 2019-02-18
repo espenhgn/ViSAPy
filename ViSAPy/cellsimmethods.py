@@ -285,8 +285,8 @@ class BenchmarkData(object):
             
             print('SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
-                        f['LFP'].value.min() if 'LFP' in f.keys() else f['electrode000'].value.min(),
-                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max()))
+                        f['LFP'][()].min() if 'LFP' in f.keys() else f['electrode000'][()].min(),
+                        f['LFP'][()].max() if 'LFP' in f.keys() else f['electrode000'][()].max()))
             
             f.close()
             
@@ -661,9 +661,9 @@ class BenchmarkData(object):
                 method read_lfp_cell_files() indexed by cellindex
                 starting at zero
         '''
-        lfp = np.zeros(cells[list(cells.keys())[0]].LFP.value.shape, dtype='float32')
+        lfp = np.zeros(cells[list(cells.keys())[0]].LFP.shape, dtype='float32')
         for cell in cells.values():
-            lfp += cell.LFP.value
+            lfp += cell.LFP[()]
             #close file object
             cell.f.close()
             print('.'),
@@ -694,14 +694,14 @@ class BenchmarkData(object):
             
             f = h5py.File(os.path.join(self.savefolder,
                                             self.default_h5_file) % \
-                                        (cellindex), 'r+')
+                                        (cellindex))
             print(os.path.join(self.savefolder,
                                self.default_h5_file) % (cellindex))
             for k in f.keys():
                 if k in ['LFP', 'electrode000']:
                     setattr(cells[cellindex], 'LFP', f[k])
                 else:
-                    setattr(cells[cellindex], k, f[k].value)
+                    setattr(cells[cellindex], k, f[k][()])
                     try:
                         assert(hasattr(cells[cellindex], k))
                     except AssertionError as ae:
@@ -843,7 +843,7 @@ class BenchmarkData(object):
             #add noise to all channels
             f = h5py.File(os.path.join(self.savefolder,
                                        'ViSAPy_noise.h5'), 'r')
-            lfp += f['data'].value[:lfp.shape[0], :lfp.shape[1]]
+            lfp += f['data'][()][:lfp.shape[0], :lfp.shape[1]]
             f.close()
             print('noise ok')
 
@@ -1196,8 +1196,7 @@ class BenchmarkDataLayer(BenchmarkData):
 
             #access file object
             f = h5py.File(os.path.join(self.savefolder,
-                                self.default_h5_file) % (cellindex),
-                          mode='r+')
+                                self.default_h5_file) % (cellindex))
             
             if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:
@@ -1226,8 +1225,8 @@ class BenchmarkDataLayer(BenchmarkData):
             #print some stuff
             print('SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
-                        f['LFP'].value.min() if 'LFP' in f.keys() else f['electrode000'].value.min(),
-                        f['LFP'].value.max() if 'LFP' in f.keys() else f['electrode000'].value.max()))
+                        f['LFP'][()].min() if 'LFP' in f.keys() else f['electrode000'][()].min(),
+                        f['LFP'][()].max() if 'LFP' in f.keys() else f['electrode000'][()].max()))
 
             f.close()
             

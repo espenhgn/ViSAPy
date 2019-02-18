@@ -356,7 +356,7 @@ class Network(object):
             for t in leg.get_texts():
                 t.set_fontsize('small')    # the legend text fontsize
             ax.set_title('spike raster')
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top']:
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
@@ -393,7 +393,7 @@ class Network(object):
             for t in leg.get_texts():
                 t.set_fontsize('small')    # the legend text fontsize
 
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top']:
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
@@ -428,7 +428,7 @@ class Network(object):
             for t in leg.get_texts():
                 t.set_fontsize('small')    # the legend text fontsize
 
-            for loc, spine in ax.spines.iteritems():
+            for loc, spine in ax.spines.items():
                 if loc in ['right', 'top']:
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
@@ -1105,8 +1105,8 @@ class ExternalNoiseRingNetwork(RingNetwork):
             
             #get the rate functions
             f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'))
-            self.lambda_t_E = f['lambda_t_E'].value
-            self.lambda_t_I = f['lambda_t_I'].value
+            self.lambda_t_E = f['lambda_t_E'][()]
+            self.lambda_t_I = f['lambda_t_I'][()]
             f.close()
         else:
             #container fpr nonstationary times:
@@ -1150,8 +1150,8 @@ class ExternalNoiseRingNetwork(RingNetwork):
                 #get the rate functions
                 f = h5py.File(os.path.join(self.savefolder,
                                            'ViSAPy_noise.h5'))
-                self.lambda_t_E = f['lambda_t_E'].value
-                self.lambda_t_I = f['lambda_t_I'].value
+                self.lambda_t_E = f['lambda_t_E'][()]
+                self.lambda_t_I = f['lambda_t_I'][()]
                 f.close()
             
             COMM.Barrier()
@@ -1177,7 +1177,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
     #                                       'ViSAPy_noise.h5'),
     #                      'r')
     #            #lambda function
-    #            lambda_t = f['lambda_t'].value
+    #            lambda_t = f['lambda_t'][()]
     #            #close file
     #            f.close()
     #        #if not, create CorrelatedNoise instance, compute extracellular
@@ -1347,7 +1347,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                 leg = ax0.legend()
                 for t in leg.get_texts():
                     t.set_fontsize('small')    # the legend text fontsize
-                for loc, spine in ax0.spines.iteritems():
+                for loc, spine in ax0.spines.items():
                     if loc in ['right', 'top']:
                         spine.set_color('none')
                 ax0.xaxis.set_ticks_position('bottom')
@@ -1401,7 +1401,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     t.set_fontsize('small')    # the legend text fontsize
     
         
-                for loc, spine in ax2.spines.iteritems():
+                for loc, spine in ax2.spines.items():
                     if loc in ['right', 'top']:
                         spine.set_color('none')
                 ax2.xaxis.set_ticks_position('bottom')
@@ -1502,7 +1502,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     for t in leg.get_texts():
                         t.set_fontsize('small')    # the legend text fontsize
                     ax.set_title('spike raster')
-                    for loc, spine in ax.spines.iteritems():
+                    for loc, spine in ax.spines.items():
                         if loc in ['right', 'top']:
                             spine.set_color('none')
                     ax.xaxis.set_ticks_position('bottom')
@@ -1539,7 +1539,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     for t in leg.get_texts():
                         t.set_fontsize('small')    # the legend text fontsize
         
-                    for loc, spine in ax.spines.iteritems():
+                    for loc, spine in ax.spines.items():
                         if loc in ['right', 'top']:
                             spine.set_color('none')
                     ax.xaxis.set_ticks_position('bottom')
@@ -1574,7 +1574,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     for t in leg.get_texts():
                         t.set_fontsize('small')    # the legend text fontsize
         
-                    for loc, spine in ax.spines.iteritems():
+                    for loc, spine in ax.spines.items():
                         if loc in ['right', 'top']:
                             spine.set_color('none')
                     ax.xaxis.set_ticks_position('bottom')
