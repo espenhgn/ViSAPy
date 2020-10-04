@@ -20,7 +20,7 @@ from time import asctime, time
 # import main ViSAPy classes used throughout this script. We also import
 # NEST even if it is not used in order to prevent spurious segmentation
 # errors that may otherwise occur when NEST is loaded with MPI and NEURON
-# at the same time. 
+# at the same time.
 import nest
 from ViSAPy import NoiseFeatures, CorrelatedNoise, ExternalNoiseRingNetwork, RingNetwork, BenchmarkDataRing, plotBenchmarkData
 import neuron
@@ -70,7 +70,7 @@ if not os.path.isfile('L5bPCmodelsEH/morphologies/cell1.asc'):
         myzip = zipfile.ZipFile('L5bPCmodelsEH.zip', 'r')
         myzip.extractall('.')
         myzip.close()
-    
+
         #compile NMODL language files
         os.system('''
                   cd L5bPCmodelsEH/mod/
@@ -89,7 +89,7 @@ neuron.load_mechanisms("L5bPCmodelsEH/mod")
 ################################################################################
 
 #set up base parameter file for the LFPy.Cell or LFPy.TemplateCell class,
-#without specifying cell model. 
+#without specifying cell model.
 cellParameters = {
     'v_init' : -80,
     'passive' : False,
@@ -131,7 +131,7 @@ simulationParameters = {
 }
 
 
-#parameters for the signal-generating model population. 
+#parameters for the signal-generating model population.
 populationParameters = {
     'POPULATION_SIZE' : 16,
     'radius' : 50,
@@ -227,7 +227,7 @@ ExternalNoiseRingNetworkParameters = {
 
 
 #nyquist frequency of simulation output
-nyquist = 1000. / cellParameters['dt'] / 2 
+nyquist = 1000. / cellParameters['dt'] / 2
 
 
 #Parameters for class ViSAPy.LogBumpFilterBank that sets up
@@ -241,7 +241,7 @@ logBumpParameters = dict(
 
 
 #set up filtering steps of extracellular potentials
-filters = [] 
+filters = []
 #presample filter to avoid aliasing
 b, a = butter(1, np.array([0.5, 8000.]) / nyquist, btype='pass')
 filters.append({
@@ -318,17 +318,17 @@ tic = time()
 ################################################################################
 ## Step 1:  Estimate PSD and covariance between channels, here using
 ##          an experimental dataset.
-##          
+##
 if not os.path.isfile(noise_output_file):
     if RANK == 0:
         noise_features = NoiseFeatures(**noiseFeaturesParameters)
         psd = noise_features.psd
-        C = noise_features.C    
+        C = noise_features.C
     else:
         psd = None
         C = None
     psd = COMM.bcast(psd, root=0)
-    C = COMM.bcast(C, root=0)    
+    C = COMM.bcast(C, root=0)
 
 
 ################################################################################
@@ -336,7 +336,7 @@ if not os.path.isfile(noise_output_file):
 ##          using class NoiseFeatures, preserving the overall amplitude.
 ##          We choose to save directly to file, as it will be used in
 ##          later steps
-##          
+##
     noise_generator = CorrelatedNoise(psd=psd,
                                       C=C,
                                       amplitude_scaling=1.,
@@ -352,7 +352,7 @@ if not os.path.isfile(noise_output_file):
 ################################################################################
 ## Step 3:  Create a rate expectation envelope lambda_t for generating
 ##          non-stationary Poisson spike trains
-##          
+##
     #band-pass filter mean noise before non-stat Poisson generation
     b, a = butter(N=2, Wn=np.array([1., 25.]) / nyquist, btype='pass')
     #compute lambda function, use signal averaged over space. It will be
@@ -373,7 +373,7 @@ COMM.Barrier()
 ################################################################################
 ## Step 4:  Run network simulation, generating a pool of synaptic activation
 ##          times used by the ViSAPy.Testdata instance
-##          
+##
 
 tic = time()
 
@@ -389,7 +389,7 @@ if not os.path.isfile(os.path.join(savefolder, 'SpTimesEx.db')) \
     networkInstance.get_results()
     networkInstance.process_gdf_files()
 else:
-    #create instance of parent RingNetwork 
+    #create instance of parent RingNetwork
     networkInstance = RingNetwork(**networkParameters)
 
 network_time = time() - tic
@@ -404,7 +404,7 @@ network_time = time() - tic
 tic = time()
 
 #set some seeds AFTER network sim, may want noise and spiking to be different,
-#but populations to be equal. We are not explicitly setting the seed for NEST. 
+#but populations to be equal. We are not explicitly setting the seed for NEST.
 np.random.seed(POPULATIONSEED)
 
 #Create BenchmarkData object
@@ -439,9 +439,9 @@ bench_time = time() - tic
 ## Step 6:  Plot simulation output to the default simulation output folder
 
 tic = time()
-    
+
 #utilize plot methods provided by class plotBenchmarkData. We are
-#removing a startup transient of 500 ms. 
+#removing a startup transient of 500 ms.
 myplot = plotBenchmarkData(benchmark_data, TRANSIENT=500.)
 myplot.run()
 
@@ -458,4 +458,3 @@ if RANK == 0:
     print('network: \t%.1f seconds' % network_time)
     print('benchmark: \t%.1f seconds' % bench_time)
     print('plots: \t\t%.1f seconds\n' % plot_time)
-
