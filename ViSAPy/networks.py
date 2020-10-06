@@ -33,7 +33,7 @@ plt.rcParams.update({
     'ytick.labelsize' : 10,
     'figure.subplot.wspace' : 0.4,
     'figure.subplot.hspace' : 0.4,
-    
+
 })
 
 
@@ -46,7 +46,7 @@ RANK = COMM.Get_rank()
 ################# Class definitions ############################################
 
 class Network(object):
-    '''    
+    '''
     Parent network class, defining common methods for inherited network
     class objects
     '''
@@ -62,10 +62,10 @@ class Network(object):
                  ):
         '''
         Initialization of class Network.
-        
+
         Keyword arguments:
         ::
-        
+
             simtime : float, simulation duration
             dt : float, temporal solution of simulation
             total_num_virtual_procs : int, number of virtual threads in NEST
@@ -74,8 +74,8 @@ class Network(object):
             to_file : bool, flag for recording spike times onto file in NEST
             to_memory : bool, flag for recording spike times into memory in NEST
             print_time : bool, flag for printing simulation time in NEST
-            
-            
+
+
         '''
         #set attributes
         self.simtime = simtime
@@ -91,7 +91,7 @@ class Network(object):
         if RANK == 0:
             if not os.path.isdir(self.savefolder):
                 os.system('mkdir %s' % self.savefolder)
-            
+
             #put revision info in savefolder
             try:
                 os.system('git rev-parse HEAD -> %s/NetworkRevision.txt' % \
@@ -100,7 +100,7 @@ class Network(object):
                 pass
 
         COMM.Barrier()
-        
+
         #None-type some vars that may be created by the subclasses
         self.NE = None
         self.NI = None
@@ -110,10 +110,10 @@ class Network(object):
         self.N = None
         self.nodes_ex = None
         self.nodes_in = None
-        
+
         #reset NEST kernel and set kernel status
         nest.ResetKernel()
-        
+
         #set kernel attributes
         nest.SetKernelStatus({
             "print_time": self.print_time,
@@ -130,8 +130,8 @@ class Network(object):
             nest.SetKernelStatus({
                 "resolution": self.dt,
             })
-        
-        
+
+
         #set defaults for spike detektor mechanism
         nest.SetDefaults("spike_detector",
                          {
@@ -141,36 +141,36 @@ class Network(object):
                             "to_memory" : self.to_memory,
                             "flush_after_simulate" : True,
                             "close_after_simulate" : True,
-                         })        
+                         })
 
     def run(self):
         '''
         Run nest.Simulate until simtime
-        
+
         This method takes no keyword arguments
         '''
         #Sync
-        COMM.Barrier() 
-        
+        COMM.Barrier()
+
         if RANK == 0:
             print('running nest.Simulate until simtime=%.2f' % self.simtime)
         nest.Simulate(self.simtime)
-        
+
         if RANK == 0:
             print('simulation finished')
-        
+
         COMM.Barrier()
 
 
     def setup_spike_detector(self):
         '''
         Create spike Nest spike_detector mechanism.
-        
+
         This method takes no keyword arguments
 
         Returns:
         ::
-            
+
             ((int), (int)) : tuple of tuples with spike detektor GIDs
         '''
         if RANK == 0:
@@ -194,33 +194,33 @@ class Network(object):
     def setup_external_input(self):
         '''
         Set up and create external Poisson input with rate Network.p_rate
-        
+
         This method takes no keyword arguments
-        
+
         Returns:
         ::
-            
+
             (int) : GID of Poisson generator
         '''
         if RANK == 0:
             print('setting up poisson_generator')
-                
+
         #create Poisson generator with specific rate
         noise = nest.Create("poisson_generator", 1, {"rate": self.p_rate})
-        
+
         return noise
 
 
     def get_results(self):
         '''
         Compute and print out some statistics of network simulation
-        
+
         This method takes no keyword arguments
         '''
         if self.espikes is None and self.ispikes is None:
             print('nothing to print because there are no spike recorders')
             return
-        
+
         #gather data
         num_synapses_ex = nest.GetDefaults("excitatory")["num_connections"]
         num_synapses_in = nest.GetDefaults("inhibitory")["num_connections"]
@@ -252,31 +252,31 @@ class Network(object):
             print("Ratio number of exc/inh synapses:", num_synapses_ex / float(num_synapses_in))
             print("Excitatory rate       : %.2f Hz" % erate)
             print("Inhibitory rate       : %.2f Hz" % irate)
-        
+
         COMM.Barrier()
 
-        
+
     def raster_plots(self, xlim=(0., 1000.), from_db=True):
         '''
         Plot network activity
-        
+
         Keyword arguments:
         ::
-            
+
             xlim : length 2 tuple of floats, lower and upper time limit in plot
             from_db : bool, if True, load simulation output from sqlite database
-        
-        
+
+
         Returns:
         ::
-            
+
             matplotlib.figure.Figure object on RANK 0, None otherwise
-        
+
         '''
         if self.nodes_ex is None and self.nodes_in is None:
             print("No nodes exist for {}, plot not possible".format(self))
             return
-        
+
         if from_db and RANK == 0:
             db = GDF(os.path.join(self.savefolder, 'SpTimesEx.db'),
                      new_db=False)
@@ -297,7 +297,7 @@ class Network(object):
             inds = (xe <= xlim[1]) & (xe >= xlim[0])
             xe = xe[inds]
             ye = nest.GetStatus(self.espikes)[0]['events']['senders'][inds]
-        
+
             #broadcast the times, senders
             COMM.bcast(xe, root=0)
             COMM.bcast(ye, root=0)
@@ -316,8 +316,8 @@ class Network(object):
                 xi = np.r_[xi, times]
                 yi = np.r_[yi, np.zeros(times.size) + np.array(self.nodes_in
                                                             ).flatten()[i]]
-                i += 1            
-            db.close()         
+                i += 1
+            db.close()
         elif not from_db:
             #load only spiketimes up to xlim, inhibitory
             xi = nest.GetStatus(self.ispikes)[0]['events']['times']
@@ -333,7 +333,7 @@ class Network(object):
 
         if RANK == 0:
             fig = plt.figure(figsize=(10, 7))
-            
+
             ax = fig.add_axes([0.1, 0.6, 0.8, 0.3])
             ax.plot(xe, ye, 'o',
                     markersize=1,
@@ -341,17 +341,17 @@ class Network(object):
                     markeredgecolor='r',
                     alpha=0.5,
                     label='exc', rasterized=True)
-            
+
             ax.plot(xi, yi, 'o',
                     markersize=1,
                     markerfacecolor='b',
                     markeredgecolor='b',
                     alpha=0.5,
                     label='inh', rasterized=True)
-            
+
             ax.axis([xlim[0], xlim[1], 0, yi.max()])
             ax.set_ylabel('cell id')
-            
+
             leg = ax.legend()
             for t in leg.get_texts():
                 t.set_fontsize('small')    # the legend text fontsize
@@ -361,16 +361,16 @@ class Network(object):
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
             ax.yaxis.set_ticks_position('left')
-            
+
             ax.text(-0.1, 1.0, 'a',
                 horizontalalignment='center',
                 verticalalignment='center',
                 fontsize=20, fontweight='demibold',
                 transform=ax.transAxes)
-            
 
 
-            
+
+
             ax = fig.add_axes([0.1, 0.35, 0.8, 0.15])
             bins = np.arange(xlim[0], xlim[1]+1)
             hist = ax.hist(xe,
@@ -378,17 +378,17 @@ class Network(object):
                 color='r', label='exc', histtype='stepfilled', edgecolor='none',
                 rasterized=True)
             hist = np.array(hist[0])
-            
+
             ax.hist(xi,
                 bins=bins,
                 color='b', label='inh', histtype='stepfilled', edgecolor='none',
                 rasterized=True)
-            
+
             ax.set_ylabel('spikes / ms')
             ax.set_xlim(xlim[0], xlim[1])
             ax.set_ylim(0, hist.max())
             del hist
-            
+
             leg = ax.legend()
             for t in leg.get_texts():
                 t.set_fontsize('small')    # the legend text fontsize
@@ -398,7 +398,7 @@ class Network(object):
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
             ax.yaxis.set_ticks_position('left')
-            
+
             ax.text(-0.1, 1.0, 'b',
                 horizontalalignment='center',
                 verticalalignment='center',
@@ -406,7 +406,7 @@ class Network(object):
                 transform=ax.transAxes)
 
             ax.set_title('spike count histogram')
-            
+
             ax = fig.add_axes([0.1, 0.1, 0.8, 0.15])
             bins = np.arange(xlim[0], xlim[1]+1)
             hist = np.histogram(
@@ -414,7 +414,7 @@ class Network(object):
                 bins=bins)[0]
             ax.plot(bins[:-1], hist * 1000 / self.NE,
                     color='r', label='exc', rasterized=True)
-            
+
             hist = np.histogram(
                 xi,
                 bins=bins)[0]
@@ -423,7 +423,7 @@ class Network(object):
             ax.set_xlabel(r'$t$ (ms)', labelpad=0.1)
             ax.set_ylabel('rate (Hz)')
             ax.set_xlim(xlim[0], xlim[1])
-            
+
             leg = ax.legend()
             for t in leg.get_texts():
                 t.set_fontsize('small')    # the legend text fontsize
@@ -433,15 +433,15 @@ class Network(object):
                     spine.set_color('none')
             ax.xaxis.set_ticks_position('bottom')
             ax.yaxis.set_ticks_position('left')
-            
+
             ax.set_title('population firing rate (Hz)')
-            
+
             ax.text(-0.1, 1.0, 'c',
                 horizontalalignment='center',
                 verticalalignment='center',
                 fontsize=20, fontweight='demibold',
                 transform=ax.transAxes)
-            
+
 
             return fig
         else:
@@ -452,24 +452,24 @@ class Network(object):
         '''
         Create sqlite databases on disk allowing fast enquires of spike events.
         Relies on class ViSAPy.GDF
-        
+
         This method takes no keyword arguments
         '''
         if RANK == 0:
-    
+
             # create db from excitatory files
             f = os.path.join(self.savefolder, 'SpTimesEx.db')
             print('creating database file {}'.format(f))
-            
+
             db = GDF(f, debug=True)
             db.create(re=os.path.join(self.savefolder, self.label) + '-ex-*.gdf',
                       index=True)
             db.close()
-    
+
             # create db from inhibitory files
             f = os.path.join(self.savefolder, 'SpTimesIn.db')
             print('creating database file {}'.format(f))
-            
+
             db = GDF(f, debug=True)
             db.create(re=os.path.join(self.savefolder, self.label) + '-in-*.gdf',
                       index=True)
@@ -481,7 +481,7 @@ class Network(object):
 class StationaryPoissonNetwork(Network):
     '''
     Class StationaryPoissonNetwork, inherites class Network
-    
+
     Creates a pool of stationary Poissonian spike trains using NEST, one pool
     for excitatory synapses and another for inhibitory synapses
     '''
@@ -497,17 +497,17 @@ class StationaryPoissonNetwork(Network):
 
         Creates a pool of stationary Poissonian spike trains using NEST, one pool
         for excitatory synapses and another for inhibitory synapses
-        
+
         Keyword arguments:
         ::
-            
+
             NE : int, Number of excitatory cells
             NI : int, Number of inhibitory cells
             frateE: float, firing rate of stationary Poisson rate, excitatory
             frateI: float, firing rate of stationary Poisson rate, inhibitory
-            
+
             **kwargs : see class Network
-        
+
         '''
         #initialize parent class
         Network.__init__(self, **kwargs)
@@ -520,11 +520,11 @@ class StationaryPoissonNetwork(Network):
 
         #synapse model
         nest.CopyModel("static_synapse", "excitatory", {})
- 
+
         #create the populations
         self.nodes_ex = nest.Create('parrot_neuron', self.NE)
         self.nodes_in = nest.Create('parrot_neuron', self.NI)
-        
+
         #create spike detectors
         self.espikes, self.ispikes = self.setup_spike_detector()
 
@@ -540,24 +540,24 @@ class StationaryPoissonNetwork(Network):
     def setup_external_input(self, rate):
         '''
         Set up and create external Poisson input.
-        
+
         This method patches method Network.setup_external_input to accept
         an arbitrary rate as input.
-        
+
         Keyword arguments:
         ::
-            
+
             rate : float, rate of external Poisson generator
-        
+
         Returns:
         ::
-        
-            tuple of int, GID of Poisson generator mechanism        
+
+            tuple of int, GID of Poisson generator mechanism
         '''
         if RANK == 0:
             print('setting up poisson_generator')
-        
-        #create poisson generator    
+
+        #create poisson generator
         #noise = nest.Create("poisson_generator", 1, {"rate": rate})
         noise = nest.Create("sinusoidal_poisson_generator", 1,
                             {"rate" : rate,
@@ -572,7 +572,7 @@ class StationaryPoissonNetwork(Network):
     def connect_devices(self):
         '''
         connect network devices
-        
+
         This method takes no keyword arguments
         '''
         if RANK == 0:
@@ -593,10 +593,10 @@ class StationaryPoissonNetwork(Network):
     def get_results(self):
         '''
         Compute and print out some statistics of network simulation
-        
+
         This method takes no keyword arguments
         '''
-        
+
         #gather data
         if RANK == SIZE - 1:
             # spikes only exist on the last RANK with nest.SetNumRecProcesses(1)
@@ -626,7 +626,7 @@ class BrunelNetwork(Network):
     Brunel, N. Journal of Computational Neuroscience 8, 183-208 (2000)
     and is based off the NEST example file
     "pynest/examples/brunel-alpha-nest.py"
-    
+
     '''
     def __init__(self,
                 order=2500,
@@ -641,15 +641,15 @@ class BrunelNetwork(Network):
         ):
         '''
         Initialization of class BrunelNetwork, inherites class Network
-    
+
         This class implements a leaky integrate-and-fire network similar to
         Brunel, N. Journal of Computational Neuroscience 8, 183-208 (2000)
         and is based off the NEST example file
         "pynest/examples/brunel-alpha-nest.py"
-        
+
         Keyword arguments:
         ::
-            
+
             order : int, size of inhibitory population, excitatory population
                 size is 4 times order
             eta : float, ratio between external and threshold rate
@@ -665,7 +665,7 @@ class BrunelNetwork(Network):
         '''
         #initialize parent class
         Network.__init__(self, **kwargs)
-        
+
         #set some attributes
         self.order = order
         self.NE = 4 * self.order
@@ -707,24 +707,24 @@ class BrunelNetwork(Network):
     def create_synapses(self):
         '''
         Create excitatory and inhibitory synapses.
-        
+
         This method takes no keyword arguments.
         '''
         nest.CopyModel("static_synapse", "excitatory",
                        {"weight" : self.J_ex, "delay" : self.delay})
         nest.CopyModel("static_synapse", "inhibitory",
                        {"weight" : self.J_in, "delay" : self.delay})
-        
+
 
     def build_network(self):
         '''
         Build the network
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             ((int), (int)) : tuple of tuples with neuron GIDs
         '''
         if RANK == 0:
@@ -741,12 +741,12 @@ class BrunelNetwork(Network):
     def connect_devices(self):
         '''
         Connect all network devices.
-        
+
         This method takes no keyword arguments.
         '''
         if RANK == 0:
             print('connecting devices')
-        
+
         if RANK == 0:
             print('connecting noise generators and nodes')
         nest.Connect(self.noise, self.nodes_ex,
@@ -784,7 +784,7 @@ class RingNetwork(Network):
     Class RingNetwork, inherites class Network
 
     This class implements a leaky integrate-and-fire network similar to:
-    
+
     Birgit Kriener, Moritz Helias, Ad Aertsen and Stefan Rotter.
     "Correlations in spiking neuronal networks with distance dependent
     connections". J Comput Neurosci (2009) 27:177-200.
@@ -806,9 +806,9 @@ class RingNetwork(Network):
         ):
         '''
         Initialization of class RingNetwork, inherites class Network
-    
+
         This class implements a leaky integrate-and-fire network similar to:
-        
+
         Birgit Kriener, Moritz Helias, Ad Aertsen and Stefan Rotter.
         "Correlations in spiking neuronal networks with distance dependent
         connections". J Comput Neurosci (2009) 27:177-200.
@@ -817,7 +817,7 @@ class RingNetwork(Network):
 
         Keyword arguments:
         ::
-            
+
             N : int, full network size, inhibitory population size is N/5
             epsilon : mask width parameter, where the mask width of the
                 network connectivity will be set as int(epsilon*N)
@@ -839,7 +839,7 @@ class RingNetwork(Network):
         '''
         #initialize parent class
         Network.__init__(self, **kwargs)
-        
+
         #set some attributes
         self.N          =  N
         self.epsilon    =  epsilon
@@ -872,7 +872,7 @@ class RingNetwork(Network):
                         "V_reset"   :  0.0,
                         "V_th"      :  self.theta
         }
-        
+
         #create mechanisms, connect network
         self.nodes_ex, self.nodes_in = self.build_network()
         self.noise = self.setup_external_input()
@@ -888,7 +888,7 @@ class RingNetwork(Network):
         '''
         #Set neuron parameters:
         nest.SetDefaults("iaf_psc_delta", self.neuron_params)
-                
+
         #Create layers:
         gridconst = 1. / self.N
         pos_ex = np.array([[], []])
@@ -902,7 +902,7 @@ class RingNetwork(Network):
                 pos_ex = np.append(pos_ex, np.array([[0.5],
                                         [gridconst / 2. + i*gridconst]]),
                                    axis=1)
-        
+
         #dict for layer properties
         exc_set = {"positions": list(pos_ex.T),
                    "elements" : "iaf_psc_delta",
@@ -910,7 +910,7 @@ class RingNetwork(Network):
                    "extent" :   [2 * gridconst, 1.],
                    "center" :   [0.5, 0.5]
                    }
-        
+
         #create layer, get nodes
         exc = topology.CreateLayer(exc_set)
         nodes_ex = nest.GetLeaves(exc)
@@ -984,7 +984,7 @@ class RingNetwork(Network):
     def connect_devices(self):
         '''
         connect network devices
-        
+
         This method takes no keyword arguments
         '''
         if RANK == 0:
@@ -1003,12 +1003,12 @@ class ExternalNoiseRingNetwork(RingNetwork):
     Class ExternalNoiseRingNetwork, inherites class RingNetwork
 
     This class implements a leaky integrate-and-fire network similar to:
-    
+
     Birgit Kriener, Moritz Helias, Ad Aertsen and Stefan Rotter.
     "Correlations in spiking neuronal networks with distance dependent
     connections". J Comput Neurosci (2009) 27:177-200.
     DOI 10.1007/s10827-008-0135-1
-    
+
     but with external noise generated by NonStationaryPoisson,
     where the lambda function is determined by spatial mean of
     extracellular noise.
@@ -1025,24 +1025,24 @@ class ExternalNoiseRingNetwork(RingNetwork):
         '''
         Initialization of class ExternalNoiseRingNetwork,
         inherites class RingNetwork
-    
+
         This class implements a leaky integrate-and-fire network similar to:
-        
+
         Birgit Kriener, Moritz Helias, Ad Aertsen and Stefan Rotter.
         "Correlations in spiking neuronal networks with distance dependent
         connections". J Comput Neurosci (2009) 27:177-200.
         DOI 10.1007/s10827-008-0135-1
-        
+
         but with external noise generated by NonStationaryPoisson,
         where the lambda function is determined by spatial mean of
         extracellular noise.
-        
+
         All N neurons of given time will get some input
         with given rate
-        
+
         Keyword arguments:
         ::
-            
+
             lambda_t : np.ndarray, length (tstop*dt+1) vector representing
                 rate expectation for non-stationary Poisson generator, e.g.,
                 generated using
@@ -1057,13 +1057,13 @@ class ExternalNoiseRingNetwork(RingNetwork):
                 excitatory and inhibitory populatons
             weight : float, strength of synaptic weights in mV of non-stationary
                 Poisson input onto target cells
-            
+
             **kwargs : see parent class RingNetwork and class Network
-        
+
         '''
         #initialize parent class
         RingNetwork.__init__(self, **kwargs)
-        
+
         #set some attributes
         self.lambda_t = lambda_t
         self.tstop = tstop
@@ -1072,21 +1072,21 @@ class ExternalNoiseRingNetwork(RingNetwork):
         self.rate = rate
         self.projection = projection
         self.weight = weight
-        
+
         ##set up the nonstationary poisson processes
         #self.extracellular_noise = self.get_extracellular_noise()
-        
-        #preprocess rate expectations to excitatory and inhibitory populations 
+
+        #preprocess rate expectations to excitatory and inhibitory populations
         if self.invertnoise_ex:
             lambda_t_e = -self.lambda_t.copy()
         else:
             lambda_t_e = self.lambda_t.copy()
-                
+
         if self.invertnoise_in:
             lambda_t_i = -self.lambda_t.copy()
         else:
             lambda_t_i = self.lambda_t.copy()
-        
+
         #setup parameter dictionary for generation of non-stationary Poisson
         #events
         self.nonStatPoissonParameters = {
@@ -1094,7 +1094,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                             self.dt,
             'rate' : self.rate,
             }
-        
+
         #Produce non-stationary Poissonian spike trains, read from database
         #if file exists.
         if os.path.isfile(os.path.join(self.savefolder, 'non_stat_spikes.db')):
@@ -1102,16 +1102,17 @@ class ExternalNoiseRingNetwork(RingNetwork):
                                   new_db=False)
             self.nonStatPoisson = db.select(db.neurons())
             db.close()
-            
+
             #get the rate functions
-            f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'))
+            f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'),
+                          'r')
             self.lambda_t_E = f['lambda_t_E'][()]
             self.lambda_t_I = f['lambda_t_I'][()]
             f.close()
         else:
             #container fpr nonstationary times:
             self.nonStatPoisson = []
-            
+
             #extract nonstationary noise inputs for each cell in the network
             if RANK == 0:
                 for proj in self.projection:
@@ -1125,47 +1126,49 @@ class ExternalNoiseRingNetwork(RingNetwork):
                         self.nonStatPoisson += nonStat_I
                     else:
                         raise Exception("projection is not 'exc' and/or 'inh'")
-            
+
                 #save lambda_t_E and lambda_t_I in file for plots later
-                f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'))
+                f = h5py.File(os.path.join(self.savefolder, 'ViSAPy_noise.h5'),
+                              'a')
                 f['lambda_t_E'] = self.lambda_t_E
                 f['lambda_t_I'] = self.lambda_t_I
                 f.close()
-            
+
                 #save the nonstationary poisson spikes in db
                 db = GDF(os.path.join(self.savefolder, 'non_stat_spikes.db'),
                                       new_db=True, debug=True)
                 db.create_from_list(re=self.nonStatPoisson)
                 db.close()
-            
+
             #sync
             COMM.Barrier()
-            
+
             if RANK != 0:
                 db = GDF(os.path.join(self.savefolder, 'non_stat_spikes.db'),
                                       new_db=False)
                 self.nonStatPoisson = db.select(db.neurons())
                 db.close()
-                
+
                 #get the rate functions
                 f = h5py.File(os.path.join(self.savefolder,
-                                           'ViSAPy_noise.h5'))
+                                           'ViSAPy_noise.h5'),
+                              'r')
                 self.lambda_t_E = f['lambda_t_E'][()]
                 self.lambda_t_I = f['lambda_t_I'][()]
                 f.close()
-            
+
             COMM.Barrier()
-        
+
         #setup spike generators and connect with neuron populations
-        self.spike_generator = self.setup_nonStatPoisson_input()        
+        self.spike_generator = self.setup_nonStatPoisson_input()
         self.connect_nonStatPoisson()
 
 
-    #def get_extracellular_noise(self):        
+    #def get_extracellular_noise(self):
     #    '''
     #    Generate extracellular noise, noise mean used to generate
     #    the rate function for the nonstationary poisson process
-    #    
+    #
     #    This method takes no keyword arguments
     #    '''
     #    if RANK == 0:
@@ -1186,17 +1189,17 @@ class ExternalNoiseRingNetwork(RingNetwork):
     #            cnoise = CorrelatedNoise(**self.correlatedNoiseParameters)
     #            noise = cnoise.correlated_noise(T = self.simtime)
     #            print 'noise ok'
-    #                            
-    #            
-    #            #time vector, save only stuff t >= 0 
+    #
+    #
+    #            #time vector, save only stuff t >= 0
     #            tvec = np.arange(0, self.tstop + self.dt, self.dt)
-    #            
+    #
     #            #save noise so that it can be superimposed onto LFP later
     #            f = h5py.File(os.path.join(self.savefolder,
     #                                       'ViSAPy_noise.h5'))
     #            #dump data
     #            f['data'] = noise[:, tvec >= 0]
-    #            
+    #
     #            #band-pass filter mean noise before non-stat Poisson generation
     #            b, a = ss.butter(N=2,
     #                             Wn=np.array([1., 25]) / (1000. / self.dt / 2),
@@ -1206,7 +1209,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
     #
     #            #save lambda function
     #            f['lambda_t'] = lambda_t
-    #            
+    #
     #            #close file
     #            f.close()
     #            print 'saved extracellular noise'
@@ -1215,23 +1218,23 @@ class ExternalNoiseRingNetwork(RingNetwork):
     #        lambda_t = None
     #    #broadcast the noise
     #    return COMM.bcast(lambda_t, root=0)
-        
-        
+
+
     def get_nonstationary_poisson(self, noise, N):
         '''
         Create non-stationary Poisson spiketrains using the NonStationaryPoisson
         class.
-        
+
         Keyword arguments:
         ::
-            
+
             noise : np.ndarray, expectation rate for Poisson output
             N : int, number of generated Poisson spiketrains
-        
+
         '''
         if RANK == 0:
             print('generating non-stationary Poisson inputs')
-        
+
         if RANK == 0:
             #generate poisson spike time trains
             nonstatpoisson = NonStationaryPoisson(lambda_t=noise, N=N,
@@ -1241,44 +1244,44 @@ class ExternalNoiseRingNetwork(RingNetwork):
         else:
             poisson = None
             lambda_t = None
-        
+
         #return poisson spiketimes and rate function:
         return poisson, lambda_t
-        
+
 
     def setup_nonStatPoisson_input(self):
         '''
         Set up and create external Poisson input
-        
+
         This method takes no keyword arguments
         '''
         if RANK == 0:
             print('setting up spike_generator')
-        
+
         spike_generator = nest.Create("spike_generator",
                                       len(self.nonStatPoisson))
-            
+
         nest.SetStatus(spike_generator,
                        [{'spike_times' : x[x > 0]} for x in self.nonStatPoisson])
-        
+
         return spike_generator
-        
-            
+
+
     def connect_nonStatPoisson(self):
         '''
         Connect the non-stationary poisson times with target neurons
-        
+
         This method takes no keyword arguments
         '''
         if RANK == 0:
             print('connecting non-stationary poisson times')
-        
+
         i = 0
         for proj in self.projection:
             if proj == 'exc':
                 nest.Connect(self.spike_generator[i:i + self.NE],
                              self.nodes_ex[0],
-                             conn_spec='one_to_one', 
+                             conn_spec='one_to_one',
                              syn_spec=dict(
                                 weight=self.weight,
                                 delay=1.)
@@ -1287,7 +1290,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
             elif proj == 'inh':
                 nest.Connect(self.spike_generator[i:i + self.NI],
                              self.nodes_in[0],
-                             conn_spec='one_to_one', 
+                             conn_spec='one_to_one',
                              syn_spec=dict(
                                 weight=self.weight,
                                 delay=1.)
@@ -1301,18 +1304,18 @@ class ExternalNoiseRingNetwork(RingNetwork):
     def raster_plots_full(self, xlim=[0, 1000], from_db=True):
         '''
         plot lambda functions, non-stationary poisson spike trains and network
-        activity. 
+        activity.
 
         Keyword arguments:
         ::
-            
+
             xlim : length 2 tuple of floats, lower and upper time limit in plot
             from_db : bool, if True, load simulation output from sqlite database
-        
-        
+
+
         Returns:
         ::
-            
+
             matplotlib.figure.Figure object on RANK 0, None otherwise
         '''
         tvec = np.arange(self.simtime/self.dt +1) * self.dt
@@ -1336,7 +1339,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     fontsize=18, fontweight='demibold',
                     transform=ax.transAxes)
 
-                
+
                 #plot lambda_t_E and lambda_t_I
                 ax0 = fig.add_subplot(gs[1])
                 ax0.plot(tvec[tslice], self.lambda_t_E[tslice], 'r',
@@ -1360,8 +1363,8 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     verticalalignment='center',
                     fontsize=18, fontweight='demibold',
                     transform=ax0.transAxes)
-    
-        
+
+
                 #plot nonstationary poisson
                 ax2 = fig.add_subplot(gs[2:4])
                 db = GDF(os.path.join(self.savefolder, 'non_stat_spikes.db'),
@@ -1375,11 +1378,11 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     xns = np.r_[xns, x]
                     yns = np.r_[yns, np.zeros(x.size) + neurons[i]]
                     i += 1
-                
+
                 ax2.plot(xns, yns, 'o',
                             markersize=1, markerfacecolor='r', markeredgecolor='r',
                             alpha=0.25, rasterized=True, label='exc')
-        
+
                 #inhibitory
                 neurons = np.array(self.nodes_in).flatten()
                 xns = np.array([])
@@ -1390,17 +1393,17 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     yns = np.r_[yns, np.zeros(x.size) + neurons[i]]
                     i += 1
                 db.close()
-    
-                
+
+
                 ax2.plot(xns, yns, 'o',
                             markersize=1, markerfacecolor='b', markeredgecolor='b',
                             alpha=0.25, rasterized=True, label='inh')
-        
+
                 leg = ax2.legend()
                 for t in leg.get_texts():
                     t.set_fontsize('small')    # the legend text fontsize
-    
-        
+
+
                 for loc, spine in ax2.spines.items():
                     if loc in ['right', 'top']:
                         spine.set_color('none')
@@ -1416,7 +1419,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     verticalalignment='center',
                     fontsize=18, fontweight='demibold',
                     transform=ax2.transAxes)
-                
+
             return fig
 
 
@@ -1442,13 +1445,13 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     inds = (xe <= xlim[1]) & (xe >= xlim[0])
                     xe = xe[inds]
                     ye = nest.GetStatus(self.espikes)[0]['events']['senders'][inds]
-                
+
                     #broadcast the times, senders
                     COMM.bcast(xe, root=0)
                     COMM.bcast(ye, root=0)
                 else:
                     return
-        
+
                 if from_db and RANK == 0:
                     db = GDF(os.path.join(self.savefolder, 'SpTimesIn.db'),
                                           new_db=False)
@@ -1462,23 +1465,23 @@ class ExternalNoiseRingNetwork(RingNetwork):
                         yi = np.r_[yi, np.zeros(times.size) + np.array(self.nodes_in
                                                                     ).flatten()[i]]
                         i += 1
-                    db.close()         
+                    db.close()
                 elif not from_db:
                     #load only spiketimes up to xlim, inhibitory
                     xi = nest.GetStatus(self.ispikes)[0]['events']['times']
                     inds = (xi <= xlim[1]) & (xi >= xlim[0])
                     xi = xi[inds]
                     yi = nest.GetStatus(self.ispikes)[0]['events']['senders'][inds]
-        
+
                     #broadcast the times, senders
                     COMM.bcast(xi, root=0)
                     COMM.bcast(yi, root=0)
                 else:
                     return
-        
+
                 if RANK == 0:
                     #fig.suptitle('Spike rasters, spike histogram, firing rate')
-                    
+
                     ax = fig.add_subplot(gs[4:6])
                     ax.plot(xe, ye, 'o',
                             markersize=1,
@@ -1486,18 +1489,18 @@ class ExternalNoiseRingNetwork(RingNetwork):
                             markeredgecolor='r',
                             alpha=0.5,
                             label='exc', rasterized=True)
-                    
+
                     ax.plot(xi, yi, 'o',
                             markersize=1,
                             markerfacecolor='b',
                             markeredgecolor='b',
                             alpha=0.5,
                             label='inh', rasterized=True)
-                    
+
                     ax.axis([xlim[0], xlim[1],
                              np.min(self.nodes_ex), np.max(self.nodes_in)])
                     ax.set_ylabel('cell id')
-                    
+
                     leg = ax.legend()
                     for t in leg.get_texts():
                         t.set_fontsize('small')    # the legend text fontsize
@@ -1513,10 +1516,10 @@ class ExternalNoiseRingNetwork(RingNetwork):
                         verticalalignment='center',
                         fontsize=20, fontweight='demibold',
                         transform=ax.transAxes)
-                    
-        
-        
-                    
+
+
+
+
                     ax = fig.add_subplot(gs[6:8])
                     bins = np.arange(xlim[0], xlim[1]+1)
                     hist = ax.hist(xe,
@@ -1524,35 +1527,35 @@ class ExternalNoiseRingNetwork(RingNetwork):
                         color='r', label='exc', histtype='stepfilled', edgecolor='none',
                         rasterized=True)
                     hist = np.array(hist[0])
-                    
+
                     ax.hist(xi,
                         bins=bins,
                         color='b', label='inh', histtype='stepfilled', edgecolor='none',
                         rasterized=True)
-                    
+
                     ax.set_ylabel('spikes / ms')
                     ax.set_xlim(xlim[0], xlim[1])
                     ax.set_ylim(0, hist.max())
                     del hist
-                    
+
                     leg = ax.legend()
                     for t in leg.get_texts():
                         t.set_fontsize('small')    # the legend text fontsize
-        
+
                     for loc, spine in ax.spines.items():
                         if loc in ['right', 'top']:
                             spine.set_color('none')
                     ax.xaxis.set_ticks_position('bottom')
                     ax.yaxis.set_ticks_position('left')
-                    ax.set_xticks([])                
+                    ax.set_xticks([])
                     ax.text(-0.1, 1.0, 'e',
                         horizontalalignment='center',
                         verticalalignment='center',
                         fontsize=20, fontweight='demibold',
                         transform=ax.transAxes)
-        
+
                     ax.set_title('spike count histogram')
-                    
+
                     ax = fig.add_subplot(gs[8:])
                     bins = np.arange(xlim[0], xlim[1]+1)
                     hist = np.histogram(
@@ -1560,7 +1563,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
                         bins=bins)[0]
                     ax.plot(bins[:-1], hist * 1000 / self.NE,
                             color='r', label='exc', rasterized=True)
-                    
+
                     hist = np.histogram(
                         xi,
                         bins=bins)[0]
@@ -1569,37 +1572,37 @@ class ExternalNoiseRingNetwork(RingNetwork):
                     ax.set_xlabel(r'$t$ (ms)', labelpad=0.1)
                     ax.set_ylabel('rate (Hz)')
                     ax.set_xlim(xlim[0], xlim[1])
-                    
+
                     leg = ax.legend()
                     for t in leg.get_texts():
                         t.set_fontsize('small')    # the legend text fontsize
-        
+
                     for loc, spine in ax.spines.items():
                         if loc in ['right', 'top']:
                             spine.set_color('none')
                     ax.xaxis.set_ticks_position('bottom')
                     ax.yaxis.set_ticks_position('left')
-                    
+
                     ax.set_title('population firing rate (Hz)')
-                    
+
                     ax.text(-0.1, 1.0, 'f',
                         horizontalalignment='center',
                         verticalalignment='center',
                         fontsize=20, fontweight='demibold',
                         transform=ax.transAxes)
-            
+
             return fig
 
 
         if RANK == 0:
             fig = plt.figure(figsize=(10, 10))
-            
+
             fig = plot_nonstat(fig, xlim)
             print('ok')
             fig = plot_rasters(fig, xlim, from_db)
             print('ok')
 
-            
+
             return fig
         else:
             return
@@ -1608,7 +1611,7 @@ class ExternalNoiseRingNetwork(RingNetwork):
 if __name__ == '__main__':
     #set nest verbosity
     nest.sli_run("%s setverbosity" % 'M_WARNING')
-    
+
     #test different Network instances
     networks = [
         Network,
@@ -1617,7 +1620,7 @@ if __name__ == '__main__':
         RingNetwork,
         ExternalNoiseRingNetwork
     ]
-    
+
     #corresponding parameters, only setting the network size.
     parameters = [
         dict(),
@@ -1628,23 +1631,23 @@ if __name__ == '__main__':
              lambda_t=np.cos(5*2*np.pi*np.linspace(0., 1., 10001)),
              rate=20., weight=2.)
     ]
-    
+
     for network, params in zip(networks, parameters):
         if RANK == 0:
             os.system('rm -r savedata')
         COMM.Barrier()
-        
-        print('\n\nTest {}\n\n'.format(network)) 
+
+        print('\n\nTest {}\n\n'.format(network))
         net = network(**params)
         net.run()
         net.get_results()
         net.process_gdf_files()
         net.raster_plots()
-    
+
         if network == ExternalNoiseRingNetwork:
             net.raster_plots_full()
 
     os.system('rm -r savedata')
-    
-    
+
+
     plt.show()

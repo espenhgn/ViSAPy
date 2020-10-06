@@ -29,7 +29,7 @@ def scale_matrix(m, new, order=1, output=None):
 
     Keyword arguments:
     ::
-        
+
         m      : input matrix
         new    : tuple indicating shape of new matrix
         order  : spline interpolation order
@@ -38,14 +38,14 @@ def scale_matrix(m, new, order=1, output=None):
 
     Returns:
     ::
-        
+
         ndarray with shape new
     '''
     if output is None: output = m.dtype
     old = m.shape
     slices = tuple([slice(0,i-1,k*1j) for i,k in zip(old,new)])
     coords = np.mgrid[slices]
-    
+
     return map_coordinates(m, coords, order=order, output=output)
 
 
@@ -72,7 +72,7 @@ def logbumps(n=5, t=32, alpha=.01, spikes=False, identity=False, normalize=True,
     """
     Use Jon Pillow's cosine bump basis exactly so it is trivial to cite.
     An alternative basis would be the decomposition in the steerable pyramid.
-    
+
     Keyword arguments:
     ::
 
@@ -81,11 +81,11 @@ def logbumps(n=5, t=32, alpha=.01, spikes=False, identity=False, normalize=True,
         alpha     : controls non-linearity of bumps (closer to zero is more nonlinear)
         spikes    : discard the basis with peak at 0
         identity  : prepend an identity filter at beginning
-        
+
     Returns:
     ::
         lb        : np.ndarray
-        
+
     """
     # create n cosine bumps (with first and last being half bumps)
     n += 1
@@ -98,12 +98,12 @@ def logbumps(n=5, t=32, alpha=.01, spikes=False, identity=False, normalize=True,
     y[y>np.pi] = np.pi
     y[y<-np.pi] = -np.pi
     b = (np.cos(y)+1)/2
-    
-    
+
+
     # change to log time scale
     lb = np.zeros_like(b)
     logx = np.log(x+alpha)
-    
+
     for i in range(n):
         f = interp1d(logx, b[i], kind='linear')
         nx = np.linspace(logx[0], logx[-1], t)
@@ -114,16 +114,16 @@ def logbumps(n=5, t=32, alpha=.01, spikes=False, identity=False, normalize=True,
 
     # flip time order
     lb = lb[::-1]
-    
+
     ## discard last bf
     lb = lb[:-1]
-    
+
     # if spike basis, remove first bf
     if spikes:
         lb = lb[1:]
 
     if identity:
-        # prepend identity filter        
+        # prepend identity filter
         id = np.zeros(t)
         id[0] = 1.
         lb = np.concatenate(([id], lb))
@@ -131,10 +131,10 @@ def logbumps(n=5, t=32, alpha=.01, spikes=False, identity=False, normalize=True,
     if normalize:
         # filters should sum to 1
         lb /= lb.sum(axis=1)[:,None]
-        
+
     if debug:
         plt.figure(figno)
-        plt.clf()        
+        plt.clf()
         plt.subplot(4,1,1)
         plt.plot(x, b.T)
         plt.title('bumps')
@@ -149,7 +149,7 @@ def logbumps(n=5, t=32, alpha=.01, spikes=False, identity=False, normalize=True,
         plt.title('log-bases')
         plt.subplots_adjust(hspace=.6)
 
-    
+
     return lb
 
 
@@ -161,18 +161,18 @@ class LogBumpFilterBank(object):
                  **kwargs):
         '''
         Initialization of class LogBumpFilterBank
-        
+
         This class provides methods to construct log-bump filter coefficients
-        
+
         Keyword arguments:
         ::
-            
+
             nyquist  : int, Nyquist frequency
             n        : int, number of log-gabor bumps to use
             taps     : int, number of taps of filter
             alpha    : float, squeeze parameter
             **kwargs : discarded arguments
-            
+
         '''
         #set some attributes
         self.nyquist = int(nyquist)
@@ -189,20 +189,20 @@ class LogBumpFilterBank(object):
     def create_filter_bank(self):
         '''
         Create time-domain acausal log-gabor filter bank
-        
+
         Non-public method
         '''
         # fourier domain logarithmic basis
         self.logbases = logbumps(n=self.n, t=self.nyquist,
                                  spikes=False, identity=False,
-                                 normalize=False, alpha=self.alpha)        
-        
+                                 normalize=False, alpha=self.alpha)
+
         # symmetrize so ifft's are real
         symm = np.empty((self.n, 2*self.nyquist-1))
         symm[:, :self.nyquist] = self.logbases
         symm[:, self.nyquist:] = self.logbases[:, 1:][:, ::-1]
-        
-        
+
+
         # frequency to time domain, shift to make causal
         self.filt = ifft(symm, axis=1)
         self.filt = np.real(self.filt)
@@ -215,17 +215,17 @@ class LogBumpFilterBank(object):
     def filter(self, data):
         '''
         Apply each log-bump filter in filter bank to data
-        
+
         Keyword arguments:
         ::
-            
+
             data : np.ndarray, noise data of shape (T, nchannels)
-            
+
         Returns:
         ::
-            
+
             np.ndarray, of shape (n, T, nchannels)
-        
+
         '''
         fdata = np.zeros((self.n,) + data.shape)
 
@@ -238,7 +238,7 @@ class LogBumpFilterBank(object):
             f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
             fdata[i,:-pad] = f[pad:]
             fdata[i,-pad:] = trans[:pad]
-    
+
         return fdata
 
 
@@ -271,7 +271,7 @@ class NoiseFeatures(LogBumpFilterBank):
                  ):
         '''
         Initialization of class NoiseFeatures, inherits class LogBumpFilterBank
-        
+
         Keyword arguments:
         ::
 
@@ -285,11 +285,11 @@ class NoiseFeatures(LogBumpFilterBank):
             psdmethod     : str, 'mlab' or 'scipy.fft', method used for PSD est.
             NFFT          : int, FFT block length used for PSD estimate
             **kwargs      : see parent class LogBumpFilterBank
-            
+
         '''
         #initialize parent class
         LogBumpFilterBank.__init__(self, **kwargs)
-        
+
         self.fname = fname
         self.outputfile = outputfile
         self.T = T
@@ -313,42 +313,42 @@ class NoiseFeatures(LogBumpFilterBank):
         else:
             self._load_data()
             if self.remove_spikes:
-                self._remove_spikes(**self.remove_spikes_args)        
+                self._remove_spikes(**self.remove_spikes_args)
             self.psd, self.freqs = self.spectra(self.input_data)
-            
+
             self.fdata = self.filter(self.input_data)
             self.C = self.covariance(self.fdata)
-        
+
             #dump class attributes derived from experimental traces
             self.save()
 
 
     def save(self, ):
         '''
-        save class attributes to HDF5 file so that class instance 
+        save class attributes to HDF5 file so that class instance
         can be reconstructed later without computing output once more
-        
+
         This method takes no keywords
-        
+
         '''
-        f = h5py.File(self.outputfile)
+        f = h5py.File(self.outputfile, 'a')
         for attribute in ['input_data', 'psd', 'freqs', 'fdata', 'C', 'NFFT', 'alpha', 'n', 'taps']:
             f[attribute] = getattr(self, attribute)
         f.close()
 
-    
+
     def load(self, ):
         '''
         reload class attributes from HDF5 file output, reconstructing a
         previously created class instance.
-        
+
         If the method cannot load all attributes, it will resort to create
         all attributes.
 
         This method takes no keywords.
 
         '''
-        f = h5py.File(self.outputfile)
+        f = h5py.File(self.outputfile, 'r')
         for attribute in ['input_data', 'psd', 'freqs', 'fdata', 'C']:
             try:
                 setattr(self, attribute, f[attribute][()])
@@ -356,11 +356,11 @@ class NoiseFeatures(LogBumpFilterBank):
                 f.close()
                 self._load_data()
                 if self.remove_spikes:
-                    self._remove_spikes(**self.remove_spikes_args)        
+                    self._remove_spikes(**self.remove_spikes_args)
                 self.psd, self.freqs = self.spectra(self.input_data)
                 self.fdata = self.filter(self.input_data)
                 self.C = self.covariance(self.fdata)
-            
+
                 #dump class attributes derived from experimental traces
                 self.save()
                 break
@@ -369,7 +369,7 @@ class NoiseFeatures(LogBumpFilterBank):
     def _load_data(self):
         '''
         Load at most self.tsteps time points, if provided
-        
+
         Non-public method
         '''
         if self.fname.endswith('h5'):
@@ -380,45 +380,45 @@ class NoiseFeatures(LogBumpFilterBank):
             self.input_data = np.load(self.fname)
         else:
             raise Exception('end of %s must be .npy or .h5' % self.fname)
-        
-        
+
+
         #ensure cols are time, rows channels:
         if self.input_data.shape[1] > self.input_data.shape[0]:
             self.input_data = self.input_data.T
-        
+
         if self.tsteps_in != None:
             self.input_data = self.input_data[:self.tsteps_in]
-            
+
         if self.resample:
             self.input_data = resample(self.input_data,
                                        int(self.T * self.srate_out / 1000))
-        
-        
+
+
     def _remove_spikes(self, **kwargs):
         '''
         concatenate parts of lfp-signals without spikes using class SpikeACut
-        
+
         Non-public method
         '''
         cut = SpikeACut(data=self.input_data.T, **kwargs)
-        
+
         self.input_data = cut.data_processed.T
 
-        
+
     def covariance(self, data):
         '''
         Compute signal covariance across channels for each frequency band
-        
+
         Keyword arguments:
         ::
-        
+
             data: np.ndarray, shape (n, T, channels), frequency resolved data
-        
+
         Returns:
         ::
-            
+
             np.ndarray, shape (n, nchannels, nchannels)
-        
+
         '''
         C = np.empty((self.n,) + self.input_data.shape[1:]*2)
         for i in range(self.n):
@@ -430,15 +430,15 @@ class NoiseFeatures(LogBumpFilterBank):
     def spectra(self, data):
         '''
         Compute per channel 2-sided psd's
-        
+
         Keyword arguments:
         ::
-            
+
             data : np.ndarray, shape (T, channels), frequency resolved data
-        
+
         Returns:
         ::
-            
+
             psd : np.ndarray, shape(NFFT, nchannels) mean power spectral density
                 (PSD) across channels
             freqs : np.ndarray, length NFFT PSD frequency vector
@@ -457,7 +457,7 @@ class NoiseFeatures(LogBumpFilterBank):
                                           noverlap=int(self.NFFT*3//4))
                 #redo normalization
                 psd0[:, i] = np.sqrt(XX*self.NFFT).T
-            
+
             #for compatibility with 'scipy.fft' output, reorder elements
             freqs = np.r_[freqs0[self.NFFT//2:], freqs0[:self.NFFT//2]]
             psd = np.r_[psd0[self.NFFT//2:, ], psd0[:self.NFFT//2, ]]
@@ -475,44 +475,44 @@ class CorrelatedNoise(LogBumpFilterBank):
     def __init__(self, psd, C, amplitude_scaling=1., savefolder='savefolder', SEED=12345678, **kwargs):
         '''
         Initialization of class CorrelatedNoise, inherits class NoiseFeatures.
-        Provide methods for generating 
-        
+        Provide methods for generating
+
         Keyword arguments:
         ::
-            
+
             psd : np.ndarray, shape (NFFT, nchannels), PSD in each channel
             C : np.ndarray, shape (nbumps, nchannels, bchannels), covariance
                 between channels in each nbumps frequency band
             amplitude_scaling : float, final output scale factor
             SEED : int
             **kwargs : see class LogBumpFilterBank
-        
+
         '''
         #initialize parent class
         LogBumpFilterBank.__init__(self, **kwargs)
-        
+
         #set some attributes
         self.psd = psd
         self.C = C
         self.amplitude_scaling = amplitude_scaling
         self.savefolder = savefolder
         self.SEED = SEED
-        
+
 
     def filter(self, data):
         '''
         Apply each log-bump filter in filter bank to data
-        
+
         Keyword arguments:
         ::
-            
+
             data : np.ndarray, noise data of shape (T, nchannels)
-            
+
         Returns:
         ::
-            
+
             np.ndarray, of shape (n, T, nchannels)
-        
+
         '''
         f_ = h5py.File(os.path.join(self.savefolder,
                                     'tmpnoise_rank{}.h5'.format(RANK)), 'w')
@@ -525,12 +525,12 @@ class CorrelatedNoise(LogBumpFilterBank):
                 print('.'),
                 f, trans = lfilter(self.filt[i], 1, data, axis=0, zi=zi)
                 f_[str(i)] = np.r_[f[pad:], trans[:pad]].astype('float32')
-        
+
         f_.close()
-        
+
         # allow all file writes to finish
         COMM.Barrier()
-        
+
         if RANK == 0:
             f = h5py.File(os.path.join(self.savefolder, 'tmpnoise.h5'), 'w')
             f['data'] = np.zeros((self.n,) + data.shape, dtype='float32')
@@ -543,11 +543,11 @@ class CorrelatedNoise(LogBumpFilterBank):
                         f['data'][i, ] += f_[str(i)] #.astype('float32')
                 f_.close()
             f.close()
-            
+
             print('finished writing {}'.format(os.path.join(self.savefolder,
                                                             'tmpnoise.h5')))
-            
-            
+
+
             # remove temporary pink noise files
             for j in range(SIZE):
                 fname = os.path.join(self.savefolder,
@@ -557,9 +557,9 @@ class CorrelatedNoise(LogBumpFilterBank):
                     os.remove(fname)
                 except OSError as e:  ## if failed, report it back to the user ##
                     print("Error: {} - {}.".format(e.filename, e.strerror))
-                                             
+
         COMM.Barrier()
-    
+
 
     def correlated_noise(self, T):
         '''
@@ -568,15 +568,15 @@ class CorrelatedNoise(LogBumpFilterBank):
 
         Keyword arguments:
         ::
-        
+
             T : float, sample length in ms
 
         Returns:
         ::
-            
+
             np.ndarray, shape (nchannels, T*srate_out*1E3+1), correlated noise
         '''
-        
+
         # rf = self.filter(self.pink_noise(T))
         self.filter(self.pink_noise(T))
 
@@ -590,7 +590,7 @@ class CorrelatedNoise(LogBumpFilterBank):
                 data /= data.std(axis=0)
                 data = np.dot(sqrtC, data.T).T
                 DATA += data.astype('float32')
-            
+
             f.close()
             # remove temporary file
             print('removing temporary file {}'.format(os.path.join(self.savefolder, 'tmpnoise.h5')))
@@ -604,79 +604,79 @@ class CorrelatedNoise(LogBumpFilterBank):
         else:
             DATA = None
         return COMM.bcast(DATA)
-  
+
 
     def pink_noise(self, T):
         '''
         Create noise with correct mean spectrum
-        
+
         Same second axis as in the number of channels of file fname
-        
+
         Keyword arguments:
         ::
-        
+
             T : float, sample length in ms
-        
+
         Returns:
         ::
-            
+
             np.ndarray, shape (T*srate_out*1E3+1, nchannels),
                 uncorrelated pinkened noise
         '''
         #create pink noise one channel at the time, concatenate last axis
         rows = int(T * self.nyquist*2. / 1000. + 1)
         cols = self.C.shape[-1]
-        
+
         #temporary work with dimensions in base 2**12, much faster ifft
         rowsfft = 2**12 * (divmod(rows, 2**12)[0]+1)
-        
+
         data = np.zeros((rows, cols), dtype='float32')
-        
+
         #get state of random number generation, set unique seed per RANK
         state = np.random.get_state()
         np.random.seed(self.SEED+RANK)
-        
-        
+
+
         #deal with each channel independently
         for i in range(cols):
             if i % SIZE == RANK:
                 #scale the PSD to fit new dimensions
                 psd = scale_matrix(self.psd[:, i], (rowsfft, )).astype('complex')
-                
+
                 #random phase angles distributed in frequency domain
                 phases = np.random.uniform(low=0, high=2*np.pi, size=rowsfft)
-                
+
                 #consruct ifft vector
                 psd *= np.exp(1j*phases)
                 del phases
-                
+
                 #create pinkened nosie
                 pink0 = ifft(psd).real
                 del psd
-                
+
                 #normalize noise
                 pink0 -= pink0.mean()
                 pink0 /= pink0.std()
-                
+
                 data[:, i] = pink0[:rows].astype('float32')
-                
+
             print('.'),
-        
+
         print('pinkened noise done')
 
         #reset state
         np.random.set_state(state)
-        
+
         #sum arrays
         DATA = np.zeros(data.shape, dtype='float32')
-        COMM.Allreduce(data, DATA)        
+        COMM.Allreduce(data, DATA)
         return DATA
 
 
 if __name__ == '__main__':
-    
+
     log_bump_params = dict(n=16, taps=401, alpha=0.01, nyquist=16000,)
-    
+
     parameterset = dict(log_bump_params)
     parameterset.update(dict(outputfile=os.path.join('savedata', 'ViSAPy_noise.h5'),
         T=5000.,
@@ -687,7 +687,7 @@ if __name__ == '__main__':
         psdmethod='mlab',
         NFFT=2**16,
     ))
-    
+
     parametersets = [parameterset, dict(parameterset)]
     parametersets[1].update({
         'remove_spikes' : True,
@@ -702,7 +702,7 @@ if __name__ == '__main__':
                     'Wn' : np.array([300., 5000.]) / 16000.,
                     'btype' : 'pass',
                     },
-                'filter' : filtfilt   
+                'filter' : filtfilt
             },
         },
     })
@@ -716,34 +716,32 @@ if __name__ == '__main__':
                 os.remove(f)
         else:
             os.mkdir('savedata')
-        
-        
+
+
         #set up NoiseFeatures object
         fname = '../../ExperimentalData2012.10.19_ChristinaPolytrode/08_2012101910.bin_tetrode_raw_cleaned.h5'
         noisefeatures = NoiseFeatures(fname, **parameterset)
-    
- 
+
+
         #set up CorrelatedNoise object and create some noise
         c = CorrelatedNoise(psd=noisefeatures.psd,
                             C=noisefeatures.C,
                             amplitude_scaling=1.,
                             **log_bump_params)
         noise = c.correlated_noise(T=noisefeatures.T)
-        
-        
+
+
         #compare input and output
         fig, axes = plt.subplots(2,1)
-        
+
         axes[0].plot(noisefeatures.input_data)
         axes[0].axis(axes[0].axis('tight'))
         axes[0].set_title('input data, resampled')
-        
+
         axes[1].plot(noise.T)
         axes[1].axis(axes[1].axis('tight'))
         axes[1].set_xlabel('time step (-)', labelpad=0.1)
         axes[0].set_title('output data')
-    
-    
+
+
     plt.show()
-    
-    

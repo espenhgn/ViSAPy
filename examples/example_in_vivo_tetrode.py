@@ -96,7 +96,7 @@ cellParameters = {
     'nsegs_method' : None,
     'dt' : 2**-5,
     'tstart' : 0.,
-    'tstop' : 120500, #2 minutes without 500 ms startup transient
+    'tstop' : 1500, #2 minutes without 500 ms startup transient
     'verbose' : False,
     'pt3d' : False,
 }
@@ -346,7 +346,7 @@ if not os.path.isfile(noise_output_file):
     noise = noise_generator.correlated_noise(T = cellParameters['tstop'])
     #file object containing extracellular noise and related data
     if RANK == 0:
-        f = h5py.File(noise_output_file)
+        f = h5py.File(noise_output_file, 'r')
         f['data'] = noise
 
 
@@ -364,7 +364,7 @@ if not os.path.isfile(noise_output_file):
         f.close()
 else:
     #file exists, so we make some attempts at loading the non-stationarity
-    f = h5py.File(noise_output_file)
+    f = h5py.File(noise_output_file, 'r')
     lambda_t = f['lambda_t'][()]
     f.close()
 

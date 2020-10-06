@@ -293,7 +293,7 @@ class BenchmarkData(object):
             print('Cell %s saved to file' % cellindex)
 
             # fix for possible segmentation faults
-            cell.__del__() 
+            cell.__del__()
 
 
     def set_pop_soma_pos(self):
@@ -696,8 +696,8 @@ class BenchmarkData(object):
             cells[cellindex] = self.cellsim(cellindex, return_just_cell=True)
 
             f = h5py.File(os.path.join(self.savefolder,
-                                            self.default_h5_file) % \
-                                        (cellindex))
+                                            self.default_h5_file) %
+                                        (cellindex), 'r')
             print(os.path.join(self.savefolder,
                                self.default_h5_file) % (cellindex))
             for k in f.keys():
@@ -1199,7 +1199,7 @@ class BenchmarkDataLayer(BenchmarkData):
 
             #access file object
             f = h5py.File(os.path.join(self.savefolder,
-                                self.default_h5_file) % (cellindex))
+                                self.default_h5_file) % (cellindex), 'a')
 
             if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:

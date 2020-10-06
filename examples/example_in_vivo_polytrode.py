@@ -15,7 +15,7 @@ import glob
 if 'DISPLAY' not in os.environ:
     import matplotlib
     matplotlib.use('Agg')
-from scipy.signal import filtfilt, butter, lfilter
+from scipy.signalf import filtfilt, butter, lfilter
 from time import asctime, time
 # import main ViSAPy classes used throughout this script. We also import
 # NEST even if it is not used in order to prevent spurious segmentation
@@ -345,7 +345,7 @@ if not os.path.isfile(noise_output_file):
     noise = noise_generator.correlated_noise(T = cellParameters['tstop'])
     #file object containing extracellular noise and related data
     if RANK == 0:
-        f = h5py.File(noise_output_file)
+        f = h5py.File(noise_output_file, 'r')
         f['data'] = noise
 
 
@@ -363,7 +363,7 @@ if not os.path.isfile(noise_output_file):
         f.close()
 else:
     #file exists, so we make some attempts at loading the non-stationarity
-    f = h5py.File(noise_output_file)
+    f = h5py.File(noise_output_file, 'r')
     lambda_t = f['lambda_t'].value
     f.close()
 
