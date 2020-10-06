@@ -96,7 +96,7 @@ cellParameters = {
     'nsegs_method' : None,
     'dt' : 2**-5,
     'tstart' : 0.,
-    'tstop' : 1500, #2 minutes without 500 ms startup transient
+    'tstop' : 120500, #2 minutes without 500 ms startup transient
     'verbose' : False,
     'pt3d' : False,
 }
