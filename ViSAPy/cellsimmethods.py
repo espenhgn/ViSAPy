@@ -1060,7 +1060,7 @@ class BenchmarkDataLayer(BenchmarkData):
         return codelist
 
 
-    def cellsim(self, cellindex, return_just_cell = False):
+    def cellsim(self, cellindex, return_just_cell=False):
         '''
         do the actual simulations of LFP, using synaptic spike times from a
         network simulation
@@ -1234,6 +1234,9 @@ class BenchmarkDataLayer(BenchmarkData):
             f.close()
 
             print('Cell %s saved to file' % cellindex)
+
+            # fix for possible segmentation faults
+            cell.__del__()
 
 
     def insert_synapses(self, cell, synparams, idx,

@@ -346,7 +346,7 @@ if not os.path.isfile(noise_output_file):
     noise = noise_generator.correlated_noise(T = cellParameters['tstop'])
     #file object containing extracellular noise and related data
     if RANK == 0:
-        f = h5py.File(noise_output_file, 'r')
+        f = h5py.File(noise_output_file, 'a')
         f['data'] = noise
 
 
