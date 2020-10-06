@@ -26,7 +26,7 @@ class BenchmarkData(object):
     Main class object, allows set up of simulations, execute, and compile the
     results. This class is suitable for subclassing, e.g., create subclasses for
     custom cell simulation procedures
-    
+
     Note that BenchmarkData.cellsim do not have any stimuli, it is simply a
     reference class
     '''
@@ -92,13 +92,13 @@ class BenchmarkData(object):
         Main class object, allows set up of simulations, execute, and compile the
         results. This class is suitable for subclassing, e.g., create subclasses for
         custom cell simulation procedures
-        
+
         Note that BenchmarkData.cellsim do not have any stimuli, it is simply a
         reference class
-        
+
         kwargs:
         ::
-            
+
             cellParameters : dict
                 LFPy.TemplateCell kwargs
             morphologies : list
@@ -142,11 +142,11 @@ class BenchmarkData(object):
         self.TEMPLATEOFFS = TEMPLATEOFFS
         self.spikethreshold = spikethreshold
         if default_h5_file.find('%.') <= 0 or default_h5_file.find('.h5') <= 0:
-            raise Exception("%s must include '%.3i' and file-ending '.h5'" % 
+            raise Exception("%s must include '%.3i' and file-ending '.h5'" %
                                 default_h5_file)
         else:
             self.default_h5_file = default_h5_file
-        
+
         #put revision info in savefolder
         if RANK == 0:
             try:
@@ -155,7 +155,7 @@ class BenchmarkData(object):
             except:
                 pass
         COMM.barrier()
-    
+
 
         #certain LFPy.TemplateCell attributes being stored for each instance
         self.savelist = [
@@ -171,7 +171,7 @@ class BenchmarkData(object):
             'electrodecoeff',]
 
 
-        #using these colors and alphas:        
+        #using these colors and alphas:
         self.colors = []
         for i in range(self.POPULATION_SIZE):
             i *= 256.
@@ -180,18 +180,18 @@ class BenchmarkData(object):
             else:
                 i /= self.POPULATION_SIZE
             self.colors.append(cm.Set1(int(i)))
-        
+
         self.alphas = np.ones(self.POPULATION_SIZE)
 
         self.pop_soma_pos = self.set_pop_soma_pos()
         self.shuffled_morphologies = self.set_shuffled_morphologies()
         self.rotations = self.set_rotations()
-    
-    
+
+
     def run(self):
         '''
         Distribute individual cell simulations across MPI ranks
-        
+
         This method takes no keyword arguments.
         '''
         for cellindex in range(self.POPULATION_SIZE):
@@ -204,41 +204,41 @@ class BenchmarkData(object):
             else:
                 if divmod(cellindex, SIZE)[1] == RANK:
                     self.cellsim(cellindex)
-                    
+
         #sync
         COMM.Barrier()
 
-    
+
     def cellsim(self, cellindex, return_just_cell=False):
         '''
         dummy cell simulation without any stimulus, but can serve as a
         reference simulation case
-        
+
         Keyword arguments:
         ::
-            
+
             cellindex : int
                 cell index between 0 and POPULATION_SIZE-1
             return_just_cell : bool
                 If True, return only the LFPy.Cell object
                 if False, run full simulation, return None
-    
+
         Returns:
         ::
-            
+
             None, if return_just_cell is False
-            LFPy.Cell-object, if return_just_cell is True        
+            LFPy.Cell-object, if return_just_cell is True
         '''
         electrode = LFPy.RecExtElectrode(**self.electrodeParameters)
-        
+
         cellParameters = self.cellParameters.copy()
         cellParameters.update({
             'morphology' : self.shuffled_morphologies[cellindex]})
-            
+
         cell = LFPy.Cell(**cellParameters)
         cell.set_pos(**self.pop_soma_pos[cellindex])
-        cell.set_rotation(**self.rotations[cellindex])    
-        
+        cell.set_rotation(**self.rotations[cellindex])
+
         if return_just_cell:
             return cell
         else:
@@ -254,8 +254,8 @@ class BenchmarkData(object):
             else:
                 cell.simulate(electrode, **self.simulationParameters)
                 cell.LFP = electrode.LFP
-        
-            
+
+
             cell.x = electrode.x
             cell.y = electrode.y
             cell.z = electrode.z
@@ -265,12 +265,12 @@ class BenchmarkData(object):
             f = h5py.File(os.path.join(self.savefolder,
                                 self.default_h5_file) % (cellindex),
                           'a')
-            
+
             if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:
                     f['LFP'] = f['electrode000']
 
-            
+
             #save stuff from savelist
             for attrbt in self.savelist:
                 try:
@@ -281,23 +281,26 @@ class BenchmarkData(object):
                     f[attrbt] = getattr(cell, attrbt)
                 except:
                     f[attrbt] = str(getattr(cell, attrbt))
-            
-            
+
+
             print('SIZE %i, RANK %i, Cell %i, Min LFP: %.3f, Max LFP: %.3f' % \
                         (SIZE, RANK, cellindex,
                         f['LFP'][()].min() if 'LFP' in f.keys() else f['electrode000'][()].min(),
                         f['LFP'][()].max() if 'LFP' in f.keys() else f['electrode000'][()].max()))
-            
+
             f.close()
-            
+
             print('Cell %s saved to file' % cellindex)
 
-    
+            # fix for possible segmentation faults
+            cell.__del__() 
+
+
     def set_pop_soma_pos(self):
         '''
         set pop_soma_pos using randomly drawn locations from
         method draw_rand_pos().
-        
+
         This method takes no keyword arguments.
         '''
         if RANK == 0:
@@ -308,17 +311,17 @@ class BenchmarkData(object):
         else:
             pop_soma_pos = None
         return COMM.bcast(pop_soma_pos, root=0)
-        
-    
+
+
     def set_shuffled_morphologies(self):
         '''
         Create list of shuffled morphologies for each cell in population.
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             list of strings, each string being path to a morphology file
         '''
         if RANK == 0:
@@ -327,17 +330,17 @@ class BenchmarkData(object):
         else:
             shuffled_morphologies = None
         return COMM.bcast(shuffled_morphologies, root=0)
-    
-    
+
+
     def set_rotations(self):
         '''
         Append some random z-axis rotations for each cell in population
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             list of dicts,  on the form [{'z' : float}, ..], assigning a
             random rotation angle around z-axis applied to each cell.
         '''
@@ -350,21 +353,21 @@ class BenchmarkData(object):
         else:
             rotations = None
         return COMM.bcast(rotations, root=0)
-    
-        
+
+
     def shufflemorphos(self, files, n=100):
         '''
         reorder and elongate list files to n entries, scrambling the order
-        
+
         Keyword arguments:
         ::
-            
+
             files : list of strings, each string is path to a morphology file
             n : int, number of entries in output
-        
+
         Returns:
         ::
-            
+
             list of strings, each string is path to a morphology file
         '''
         filelist = []
@@ -373,94 +376,94 @@ class BenchmarkData(object):
             filelist.append(files[np.random.randint(low)])
         return filelist
 
-    
+
     def return_spiketrains(self, v, v_t=-30., TRANSIENT=500.):
         '''
         Takes voltage trace v, and some optional voltage threshold v_t,
         returning spike train array of same length as v.
-        
+
         The spike time is identified as the local maxima of the derivative of
         the somatic traces.
-        
+
         Keyword arguments:
         ::
-            
+
             v : np.ndarray, vector containing somatic potential of a cell
             v_t : float, action-potential detection threshold
-            TRANSIENT : float, discard detected spikes before this time 
-        
+            TRANSIENT : float, discard detected spikes before this time
+
         Returns:
         ::
-            
+
             np.ndarray, binary vector, where 1 values correspond the
             spike time index, assessed as the index maximizing dv/dt on up slope
             for every event
         '''
         AP_train = np.zeros(v.shape, dtype=int)
-        
+
         #alternative, looping over every element to check for crossings
         u = np.where((v[:-1] < v_t) & (v[1:] >= v_t))[0]
 
         #mask spikes occurring prior to TRANSIENT
         u = u[u >= int(TRANSIENT / self.cellParameters['dt'])]
-        
-        
+
+
         pre = -int(self.TEMPLATELEN * self.TEMPLATEOFFS)
         post = self.TEMPLATELEN + pre
-        
+
         #mask spikes occurring at either start or end of signal
         u = u[(u >= -pre) & (u <= v.size-post)]
-        
+
         #splitting u in intervals if there are more than 1 AP,
         #filling w with these intervals:
         for i in u:
             inds = np.arange(i + pre, i + post)
             w = v[inds[inds < v.size]]
-            
+
             AP_train[inds[:-1][np.diff(w) == np.diff(w).max()]] = 1
-                
+
         return AP_train
-    
-    
+
+
     def calc_min_cell_interdist(self, x, y, z):
         '''
         calculate cell interdistance from input coordinates.
-        
-        
+
+
         Keyword arguments:
         ::
-            
+
             x,y,z : np.ndarrays, carthesian coordinates of center each soma
-        
+
         Returns:
         ::
-            
+
             np.ndarray, minimum cell-to-cell inter distance for each unit
-        
+
         '''
         min_cell_interdist = np.zeros(self.POPULATION_SIZE)
-        
+
         for i in range(self.POPULATION_SIZE):
             cell_interdist = np.sqrt((x[i] - x)**2
                     + (y[i] - y)**2
                     + (z[i] - z)**2)
             cell_interdist[i] = np.inf
             min_cell_interdist[i] = cell_interdist.min()
-        
+
         return min_cell_interdist
 
-    
+
     def draw_rand_pos(self):
         '''
         draw some random location within radius, z_min, z_max,
         and constrained by min_r and the minimum cell interdistance.
         Returned argument is a list of dicts [{'xpos', 'ypos', 'zpos'}, ]
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             list of dictionaries on the form
             [{'x' : x[i], 'y' : y[i], 'z' : z[i]}, ...]
             containing randomized x,y,z-coordinates of each cell body
@@ -485,15 +488,15 @@ class BenchmarkData(object):
                 minrz = min_r_z[j]
         else:
             minrz = np.interp(z, min_r[0], min_r[1])
-                
+
         R_z = np.sqrt(x**2 + y**2)
-        
+
         #want to make sure that no somas are in the same place.
         cell_interdist = self.calc_min_cell_interdist(x, y, z)
-        
+
         [u] = np.where(np.logical_or((R_z < minrz) != (R_z > radius),
             cell_interdist < min_cell_interdist))
-            
+
         while len(u) > 0:
             for i in range(len(u)):
                 x[u[i]] = (np.random.rand()-0.5)*radius*2
@@ -506,44 +509,44 @@ class BenchmarkData(object):
                         if j > 0:
                             [w] = np.where(min_r_z[j] < min_r_z[j-1])
                             min_r_z[j][w] = min_r_z[j-1][w]
-                        minrz = min_r_z[j]				
+                        minrz = min_r_z[j]
                 else:
                     minrz[u[i]] = np.interp(z[u[i]], min_r[0,], min_r[1,])
             R_z = np.sqrt(x**2 + y**2)
-            
+
             #want to make sure that no somas are in the same place.
             cell_interdist = self.calc_min_cell_interdist(x, y, z)
-        
+
             [u] = np.where(np.logical_or((R_z < minrz) != (R_z > radius),
                 cell_interdist < min_cell_interdist))
-    
+
         soma_pos = []
         for i in range(self.POPULATION_SIZE):
             soma_pos.append({'x' : x[i], 'y' : y[i], 'z' : z[i]})
-        
+
         return soma_pos
-    
-    
+
+
     def draw_rand_pos_square(self):
         '''
         Draw random cell body locations, assuming an electrode occupying a
         square cross section with width and depth defined by X,Y,Z.
-        
+
         killzone arg sets minimum distance to any contact size, presumably due
-        to 
-        
+        to
+
         locations are drawn within a cylindric volume with radius and depths as
         defined in populationParameters.
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             list of dictionaries on the form
             [{'x' : x[i], 'y' : y[i], 'z' : z[i]}, ...]
             containing randomized x,y,z-coordinates of each cell body
-            
+
         '''
 
         X = self.populationParameters['X']
@@ -567,16 +570,16 @@ class BenchmarkData(object):
         ymin = np.interp(z, Z, Y[0, ]-killzone)
         ymax = np.interp(z, Z, Y[1, ]+killzone)
         inside_electrode = np.logical_and((x > xmin) & (x < xmax),
-                            (y > ymin) & (y < ymax))       
-   
+                            (y > ymin) & (y < ymax))
+
         #want to make sure that no somas are in the same place.
         cell_interdist = self.calc_min_cell_interdist(x, y, z)
 
         R_z = np.sqrt(x**2 + y**2)
-        
+
         [u] = np.where((R_z > radius) |
                         (cell_interdist < min_cell_interdist) |
-                        inside_electrode) 
+                        inside_electrode)
 
         j = 0
         while len(u) > 0:
@@ -594,42 +597,42 @@ class BenchmarkData(object):
             ymax = np.interp(z, Z, Y[1, ]+killzone)
             inside_electrode = np.logical_and((x > xmin) & (x < xmax),
                                             (y > ymin) & (y < ymax))
-            
+
             #want to make sure that no somas are in the same place.
             cell_interdist = self.calc_min_cell_interdist(x, y, z)
-        
-            [u] = np.where((R_z > radius) | 
-                            (cell_interdist < min_cell_interdist) | 
-                            inside_electrode) 
-    
+
+            [u] = np.where((R_z > radius) |
+                            (cell_interdist < min_cell_interdist) |
+                            inside_electrode)
+
             j += 1
             if j == 1000:
                 raise Exception('after %i iters, can not position somas' % j)
-            
+
         soma_pos = []
         for i in range(self.POPULATION_SIZE):
             soma_pos.append({'x' : x[i], 'y' : y[i], 'z' : z[i]})
-    
+
         return soma_pos
-    
-    
+
+
     def calc_AP_trains(self, cells):
         '''
         Extract spike times of each cell in input dictionary cells from
         somatic traces.
-        
+
         Keyword arguments:
         ::
-            
+
             cells, dict of LFPy.Cell objects as returned by
                 method read_lfp_cell_files() indexed by cellindex
                 starting at zero
-        
+
         Returns:
         ::
-            
+
             np.ndarray, first column is cell id, second column spike time index
-        
+
         '''
         AP_train_sparse =  lil_matrix((len(cells.keys()),
                             cells[list(cells.keys())[0]].AP_train.size), dtype=bool)
@@ -638,7 +641,7 @@ class BenchmarkData(object):
             AP_train_sparse[i, cell.AP_train.nonzero()[0]] = 1
             print('.'),
             i += 1
-        
+
         #reworking AP-train to work with page
         x = np.array([AP_train_sparse.nonzero()[1],
                       AP_train_sparse.nonzero()[0] + 1], dtype=int).T.tolist()
@@ -653,10 +656,10 @@ class BenchmarkData(object):
         '''
         Sum all single-cell contributions to the extracellular potential in
         each electrode location
-        
+
         Keyword arguments:
         ::
-            
+
             cells : dict of LFPy.Cell-like objects as returned by
                 method read_lfp_cell_files() indexed by cellindex
                 starting at zero
@@ -667,7 +670,7 @@ class BenchmarkData(object):
             #close file object
             cell.f.close()
             print('.'),
-        
+
         return lfp
 
 
@@ -675,23 +678,23 @@ class BenchmarkData(object):
         '''
         Create handles to hdf5 file output from each cell and append to
         each LFPy.Cell-like object, avoiding in memory loading of e.g., LFPs.
-        
+
         File objects may remain open but are closed by calc_lfp_el_pos()
-        
+
         Keyword arguments:
         ::
-            
+
             cellindices : np.ndarray, dtype int
-                indices of each cell in population, or subset of cells 
-        
+                indices of each cell in population, or subset of cells
+
         '''
         if cellindices is None:
             cellindices = np.arange(self.POPULATION_SIZE)
-        
+
         cells = {}
         for cellindex in cellindices:
             cells[cellindex] = self.cellsim(cellindex, return_just_cell=True)
-            
+
             f = h5py.File(os.path.join(self.savefolder,
                                             self.default_h5_file) % \
                                         (cellindex))
@@ -709,17 +712,17 @@ class BenchmarkData(object):
 
             #attach file object
             setattr(cells[cellindex], 'f', f)
-            
-            
-        
+
+
+
         #recalculate AP_trains:
         for cell in cells.values():
             setattr(cell, 'AP_train', self.return_spiketrains(cell.somav))
-                
-        
-        return cells    
 
-    
+
+        return cells
+
+
     def calc_somavs(self, cells):
         '''
         put all somavs from dict cells in one big array
@@ -727,20 +730,20 @@ class BenchmarkData(object):
 
         Keyword arguments:
         ::
-            
+
             cells : dict of LFPy.Cell-like objects as returned by
                 method read_lfp_cell_files() indexed by cellindex
                 starting at zero
 
         Returns:
         ::
-            
+
             np.ndarray, somatic voltages of each cell
         '''
         somavs = np.zeros((len(cells.keys()),
                            cells[list(cells.keys())[0]].somav.size),
             dtype='float32')
-        
+
         i = 0
         for cell in cells.values():
             somavs[i, ] = cell.somav
@@ -748,21 +751,21 @@ class BenchmarkData(object):
             print('.'),
 
         return somavs
-        
-        
+
+
     def collect_data(self, cellindices=None, analysis=False):
         '''
         Read results from cellsim, calculate full lfp, add noise, save to files.
-        
+
         Keyword arguments:
         ::
-            
+
             cellindices : np.ndarray, dtype int
                 indices of each cell in population, or subset of cells
-        
+
         File output:
         ::
-            
+
             ViSAPy_somatraces.h5
                 data : somatic traces of each cell in the population
                     in units of mV
@@ -789,45 +792,45 @@ class BenchmarkData(object):
                 text file with spiking ground truth, first column is unit,
                 second column spike time, however with units below a certain
                 amplitude threshold removed
-            
-        
+
+
         '''
         if RANK == 0:
             #using cellindices throughout
             if cellindices is None:
                 cellindices = np.arange(self.POPULATION_SIZE)
-            
+
             #cells = self.read_lfp_AP_trains_cell_files()
             cells = self.read_lfp_cell_files(cellindices)
             print('cells ok')
-            
+
             #remove vmem, imem if they exist, they are not needed here
             for cell in cells.values():
                 if hasattr(cell, 'vmem'):
                     del cell.vmem
                 if hasattr(cell, 'imem'):
                     del cell.imem
-            
-        
+
+
             #calculate lfp from all cell contribs
-            lfp = self.calc_lfp_el_pos(cells)    
+            lfp = self.calc_lfp_el_pos(cells)
             print('lfp ok')
-            
+
             #gather action potentials from all cells
             AP_trains = self.calc_AP_trains(cells)
             print('AP_trains ok')
-            
+
             somavs = self.calc_somavs(cells)
             print('soma potentials ok')
-            
-            
+
+
             f = h5py.File(self.savefolder + '/ViSAPy_somatraces.h5', 'w')
             f.create_dataset('data', data=somavs, compression=4)
             #f['data'] = somavs
             f['srate'] = int(1000 / self.cellParameters['dt'])
             f.close()
             print('save somatraces ok')
-            
+
             #saving
             f = h5py.File(self.savefolder + '/ViSAPy_noiseless.h5', 'w')
             f['srate'] = int(1000 / self.cellParameters['dt'])
@@ -839,7 +842,7 @@ class BenchmarkData(object):
             grp['z'] = self.electrodeParameters['z']
             f.close()
             print('save lfp ok')
-            
+
             #add noise to all channels
             f = h5py.File(os.path.join(self.savefolder,
                                        'ViSAPy_noise.h5'), 'r')
@@ -847,8 +850,8 @@ class BenchmarkData(object):
             f.close()
             print('noise ok')
 
-        
-            
+
+
             #save the somatic placements:
             pop_soma_pos = np.zeros((self.POPULATION_SIZE, 3))
             keys = ['x', 'y', 'z']
@@ -856,8 +859,8 @@ class BenchmarkData(object):
                 for j in range(3):
                     pop_soma_pos[i, j] = self.pop_soma_pos[i][keys[j]]
             np.savetxt(self.savefolder + '/ViSAPy_somapos.gdf', pop_soma_pos)
-            
-            
+
+
             # save the contact placements and additional parameters:
             f = h5py.File(os.path.join(self.savefolder,
                                        'electrodeParameters.h5'), 'w')
@@ -865,7 +868,7 @@ class BenchmarkData(object):
                 f[key] = value
             f.close()
 
-            
+
             #saving lfp before filtering
             f = h5py.File(self.savefolder + '/ViSAPy_nonfiltered.h5', 'w')
             f['srate'] = int(1000 / self.cellParameters['dt'])
@@ -876,7 +879,7 @@ class BenchmarkData(object):
             grp['z'] = self.electrodeParameters['z']
             f.close()
             print('save noisy lfp ok')
-    
+
             i = 0
             #looping over filters, and writing data, numbered
             for fltr in self.filters:
@@ -893,14 +896,14 @@ class BenchmarkData(object):
                 f.close()
                 print('save lfp filter %i ok' % i)
                 i += 1
-                
-                            
-            
+
+
+
             np.savetxt(os.path.join(self.savefolder,
                                     'ViSAPy_ground_truth.gdf'),
                        AP_trains, fmt='%i')
             print('save ground truth all cells ok')
-            
+
 
             try:
                 #gather action potential times from cells with proper amplitude
@@ -913,7 +916,7 @@ class BenchmarkData(object):
                         pass
                 AP_trains_threshold = np.array(AP_trains_threshold)
                 print('thresholded AP_trains ok')
-                
+
                 np.savetxt(os.path.join(self.savefolder,
                                         'ViSAPy_ground_truth_threshold.gdf'),
                            AP_trains_threshold, fmt = '%i')
@@ -921,20 +924,20 @@ class BenchmarkData(object):
                 pass
         #sync
         COMM.Barrier()
-              
 
 
-    
-    
+
+
+
 class BenchmarkDataLayer(BenchmarkData):
     '''
     class BenchmarkDataLayer, inherites class BenchmarkData.
-    
+
     This class expand upon the functionality of the parent class by interfacing
     spike events in e.g., a spiking-neuron network model
-    
-    
-    
+
+
+
     class object used for the L5 tetrode test data.
     kwargs are passed on to parent class BenchmarkData
     '''
@@ -973,10 +976,10 @@ class BenchmarkDataLayer(BenchmarkData):
         '''
         class initialization. Additional kwargs passed on to
         parent class testdata.BenchmarkData
-        
+
         Keyword arguments:
         ::
-            
+
             templatefiles : nested list
                 each entry list of 'hoc' code, permuted and passed to
                 class LFPy.TemplateCell
@@ -995,7 +998,7 @@ class BenchmarkDataLayer(BenchmarkData):
                     driftInterval : (ms)
                     driftShift : (mum)
                     driftOnset : (mum)
-                       
+
         '''
         #initialize parent class
         BenchmarkData.__init__(self, **kwargs)
@@ -1008,27 +1011,27 @@ class BenchmarkDataLayer(BenchmarkData):
         self.synapseParametersEx = synapseParametersEx
         self.synapseParametersIn = synapseParametersIn
         self.driftParameters = driftParameters
-        
+
         #generate some model input
         self.shuffled_templatefiles = self.set_shuffled_templatefiles()
         self.synIdxEx, self.synIdxIn = self.fetchSynIdx()
         self.SpCellsEx, self.SpCellsIn = self.fetchSpCells()
-        
+
         #store some additional LFPy.TemplateCell attributes
         self.savelist += ['templatefile', 'templateargs']
-        
-        
+
+
     def set_shuffled_templatefiles(self):
         '''
         return custom_codes repeated to POPULATION_SIZE entries, and
         in random order.
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
-            list of strings, each string a path to a NEURON template file        
+
+            list of strings, each string a path to a NEURON template file
         '''
         if RANK == 0:
             shuffled_templatefiles = self.shuffle_templatefiles()
@@ -1036,7 +1039,7 @@ class BenchmarkDataLayer(BenchmarkData):
             shuffled_templatefiles = None
         return COMM.bcast(shuffled_templatefiles, root=0)
 
-    
+
     def shuffle_templatefiles(self):
         '''
         reorder and elongate list custom_codes to n entries,
@@ -1046,7 +1049,7 @@ class BenchmarkDataLayer(BenchmarkData):
 
         Returns:
         ::
-            
+
             list of strings, each string a path to a NEURON template file
         '''
         n = self.POPULATION_SIZE
@@ -1056,7 +1059,7 @@ class BenchmarkDataLayer(BenchmarkData):
             codelist.append(self.templatefiles[np.random.randint(low)])
         return codelist
 
-    
+
     def cellsim(self, cellindex, return_just_cell = False):
         '''
         do the actual simulations of LFP, using synaptic spike times from a
@@ -1064,45 +1067,45 @@ class BenchmarkDataLayer(BenchmarkData):
 
         Keyword arguments:
         ::
-            
+
             cellindex : int
                 cell index between 0 and POPULATION_SIZE-1
             return_just_cell : bool
                 If True, return only the LFPy.Cell object
                 if False, run full simulation, return None
-    
+
         Returns:
         ::
-            
+
             None, if return_just_cell is False
-            LFPy.Cell-object, if return_just_cell is True                
+            LFPy.Cell-object, if return_just_cell is True
         '''
         electrode = LFPy.RecExtElectrode(**self.electrodeParameters)
-        
+
         morphology = self.shuffled_morphologies[cellindex]
-        
+
         #check if we have drift
         if self.driftParameters is not None:
             Cell = DriftCell
         else:
             Cell = LFPy.TemplateCell
-        
+
         cellParameters = dict(self.cellParameters)
         cellParameters.update(dict(
             morphology = self.shuffled_morphologies[cellindex],
             templatefile = self.shuffled_templatefiles[cellindex],
             templateargs = self.shuffled_morphologies[cellindex]
         ))
-        
+
         #set up cell object
         cell = Cell(**cellParameters)
         cell.set_pos(**self.pop_soma_pos[cellindex])
-        cell.set_rotation(**self.rotations[cellindex])    
-        
-                
+        cell.set_rotation(**self.rotations[cellindex])
+
+
         #make the axon point downwards, start at soma mid point, comp for diam
-        self.point_axon_down(cell)   
-                    
+        self.point_axon_down(cell)
+
         if return_just_cell:
             #with several cells, NEURON can only hold one cell at the time
             allsecnames = []
@@ -1114,7 +1117,7 @@ class BenchmarkDataLayer(BenchmarkData):
             cell.allsecnames = allsecnames
             cell.allsec = allsec
             return cell
-        else:        
+        else:
             #insert synapses
             self.insert_synapses(cell, self.synapseParametersEx.copy(),
                         self.synIdxEx[cellindex],
@@ -1148,7 +1151,7 @@ class BenchmarkDataLayer(BenchmarkData):
                     tempelectrode.calc_lfp()
                     dotprodcoeffs.append(tempelectrode.LFP)
                     print('.'),
-                    
+
                 dotprodcoeffs = np.array(dotprodcoeffs)
                 #del dummy variables
                 del cell.imem, cell.tvec
@@ -1187,8 +1190,8 @@ class BenchmarkDataLayer(BenchmarkData):
                 else:
                     cell.simulate(electrode, **self.simulationParameters)
                     cell.LFP = electrode.LFP
-        
-        
+
+
             cell.x = electrode.x
             cell.y = electrode.y
             cell.z = electrode.z
@@ -1197,7 +1200,7 @@ class BenchmarkDataLayer(BenchmarkData):
             #access file object
             f = h5py.File(os.path.join(self.savefolder,
                                 self.default_h5_file) % (cellindex))
-            
+
             if 'to_file' in self.simulationParameters.keys():
                 if self.simulationParameters['to_file']:
                     f['LFP'] = f['electrode000']
@@ -1229,21 +1232,21 @@ class BenchmarkDataLayer(BenchmarkData):
                         f['LFP'][()].max() if 'LFP' in f.keys() else f['electrode000'][()].max()))
 
             f.close()
-            
+
             print('Cell %s saved to file' % cellindex)
-    
-    
+
+
     def insert_synapses(self, cell, synparams, idx,
                         SpCell, SpTimes):
         '''
         insert synapse with parameters=synparams on cell=cell, with
         segment indexes given by idx. SpCell and SpTimes picked from Brunel
         network simulation
-        
-        
+
+
         Keyword arguments:
         ::
-            
+
             cell : LFPy.TemplateCell instance
                 cell-object synapses are attached to
             synparams : dict
@@ -1254,14 +1257,14 @@ class BenchmarkDataLayer(BenchmarkData):
                 indices of network neurons spike trains are selected from
             SpTimes : str
                 path to database file with spikes
-        
+
         '''
         print('inserting %i synsapses, TSA : %.3f ' % \
                 (idx.size, cell.area[cell.get_idx(synparams['section'])].sum()))
-        
+
         #NEURON complain about this one
         del synparams['nPerArea'], synparams['section']
-        
+
         #Insert synapses in an iterative fashion
         db = GDF(SpTimes, new_db=False)
         spikes = db.select(SpCell[:idx.size])
@@ -1270,8 +1273,8 @@ class BenchmarkDataLayer(BenchmarkData):
 
         #combine spike trains that end up on same compartment
         idx_hist, idx_bins  = np.histogram(idx, np.arange(cell.totnsegs+1))
-        
-        
+
+
         i = 0
         for j in range(cell.totnsegs):
             if idx_hist[j] > 0:
@@ -1284,29 +1287,29 @@ class BenchmarkDataLayer(BenchmarkData):
                 synapse = LFPy.Synapse(cell, **synparams)
                 synspikes.sort()
                 synapse.set_spike_times(synspikes + cell.tstart)
-        
-        
+
+
     def point_axon_down(self, cell):
         '''
         make the axon point downwards, start at soma mid point,
         comp for soma diameter
-        
+
         Keyword arguments:
         ::
-            
+
             cell : LFPy.TemplateCell instance
-        
+
         '''
         iaxon = cell.get_idx(section='axon')
         isoma = cell.get_idx(section='soma')
         cell.xstart[iaxon] = cell.xmid[isoma]
         cell.xmid[iaxon] = cell.xmid[isoma]
         cell.xend[iaxon] = cell.xmid[isoma]
-        
+
         cell.ystart[iaxon] = cell.ymid[isoma]
         cell.ymid[iaxon] = cell.ymid[isoma]
         cell.yend[iaxon] = cell.ymid[isoma]
-        
+
         j = 0
         for i in iaxon:
             cell.zstart[i] = cell.zmid[isoma] \
@@ -1316,7 +1319,7 @@ class BenchmarkDataLayer(BenchmarkData):
             cell.zend[i] = cell.zmid[isoma] \
                     - cell.diam[isoma]/2 - cell.length[i] - cell.length[i]*j
             j += 1
-        
+
         ##point the pt3d axon as well
         for sec in cell.allseclist:
             if sec.name().rfind('axon') >= 0:
@@ -1328,36 +1331,36 @@ class BenchmarkDataLayer(BenchmarkData):
                     neuron.h.pt3dchange(j, x0, y0, z0,
                                      sec.diam)
                     z0 -= L / (neuron.h.n3d()-1)
-        
-        
+
+
     def fetchSynIdx(self):
         '''
         Find possible synaptic placements for each cell.
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             tuple of lists
                 compartment indices of synapses for each cell in population.
                 First entry is for excitatory connections, second inhibitory
                 connections
-        
+
         '''
         if RANK == 0:
             syn_idx_ex = []
             syn_idx_in = []
-            
+
             cellParameters = self.cellParameters.copy()
             try:
                 if cellParameters['pt3d']:
                     cellParameters.update({'pt3d' : False})
             except:
                 cellParameters.update({'pt3d' : False})
-            
-               
-            print('find synaptic placements.'), 
+
+
+            print('find synaptic placements.'),
             for cellindex in range(self.POPULATION_SIZE):
                 print('.'),
                 cellParameters = dict(self.cellParameters)
@@ -1366,10 +1369,10 @@ class BenchmarkDataLayer(BenchmarkData):
                     templatefile = self.shuffled_templatefiles[cellindex],
                     templateargs = self.shuffled_morphologies[cellindex]
                 ))
-                
-                
+
+
                 cell = LFPy.TemplateCell(**cellParameters)
-        
+
                 section = self.synapseParametersEx['section']
                 nPerArea = self.synapseParametersEx['nPerArea']
                 #nPerArea may be specified as (mean, std) tuple
@@ -1378,7 +1381,7 @@ class BenchmarkDataLayer(BenchmarkData):
                 n = int(nPerArea*cell.area[cell.get_idx(section=section)].sum())
                 syn_idx_ex.append(cell.get_rand_idx_area_norm(section=section,
                                                               nidx=n))
-                
+
                 section = self.synapseParametersIn['section']
                 nPerArea = self.synapseParametersIn['nPerArea']
                 #nPerArea may be specified as (mean, std) tuple
@@ -1387,34 +1390,34 @@ class BenchmarkDataLayer(BenchmarkData):
                 n = int(nPerArea*cell.area[cell.get_idx(section=section)].sum())
                 syn_idx_in.append(cell.get_rand_idx_area_norm(section=section,
                                                               nidx=n))
-                
-                
+
+
             print('.')
         else:
             syn_idx_ex = None
             syn_idx_in = None
-        
+
         syn_idx_ex = COMM.bcast(syn_idx_ex, root=0)
         syn_idx_in = COMM.bcast(syn_idx_in, root=0)
-        
+
         return syn_idx_ex, syn_idx_in
 
-    
+
     def fetchSpCells(self):
         '''
         For N excitatory and inhib networkInstance-cells draw
         POPULATION_SIZE x NTIMES random cell indexes in
         these two populations and broadcast these as SpCellEx
         and SpCellIn.
-        
+
         This method takes no keyword arguments.
-        
+
         Returns:
         ::
-            
+
             tuple of lists
                 presynaptic neuron identifiers in network
-        
+
         '''
         if RANK == 0:
             SpCellEx = []
@@ -1429,11 +1432,11 @@ class BenchmarkDataLayer(BenchmarkData):
         else:
             SpCellEx = None
             SpCellIn = None
-        
+
         #broadcast the cell indexes to all ranks
         SpCellEx = COMM.bcast(SpCellEx, root=0)
         SpCellIn = COMM.bcast(SpCellIn, root=0)
-    
+
         return SpCellEx, SpCellIn
 
 
@@ -1442,7 +1445,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
     class BenchmarkDataRing.
     same as BenchmarkDataLayer, just with it's own fetchSpCells method,
     where presynaptic cells are from a specific region on the
-    network    
+    network
     '''
     def __init__(self,
                 randdist=np.random.vonmises,
@@ -1451,18 +1454,18 @@ class BenchmarkDataRing(BenchmarkDataLayer):
                  **kwargs):
         '''
         class BenchmarkDataRing initialization
-        
+
         Similar to BenchmarkDataLayer, just with it's own fetchSpCells method,
         where presynaptic cells are from a specific region on the
         network, chosen on random using either a von Mises type probability
         distribution, or boxcar.
-        
+
         Note that some spike trains from the networksim-instance may be chosen
         repeatedly if the size of the network is small.
-        
+
         arguments:
         ::
-            
+
             randdist :  function
                 np.random.vonmises for a gaussian distribution along
                 ring network topology or np.random.rand for a boxcar
@@ -1487,14 +1490,14 @@ class BenchmarkDataRing(BenchmarkDataLayer):
         #initialize the class
         BenchmarkDataLayer.__init__(self, **kwargs)
 
-        
+
     def fetchSpCells(self):
         '''
         For N excitatory and inhib networkInstance-cells draw
         POPULATION_SIZE x NTIMES random cell indexes in
         these two populations and broadcast these as SpCellEx
         and SpCellIn
-        
+
         This is meant to be used with testdata.RingNetwork, and
         will pick cells located on a region of the 1D-network
         with random Von Mises distributed numbers scaled to network nodes
@@ -1502,7 +1505,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
         if RANK == 0:
             SpCellEx = []
             SpCellIn = []
-            
+
             for i in range(self.POPULATION_SIZE):
                 if self.randdist == np.random.vonmises:
                     #pick vonmises distributed numbers on [-pi, pi] interval
@@ -1525,7 +1528,7 @@ class BenchmarkDataRing(BenchmarkDataLayer):
                 distEx += self.nodes_ex[0]
 
                 SpCellEx.append(distEx.astype(int))
-                
+
                 if self.randdist == np.random.vonmises:
                     #pick vonmises distributed numbers on [-pi, pi] interval
                     distIn = self.randdist(self.loc_IN[i], self.sigma_IN,
@@ -1545,16 +1548,15 @@ class BenchmarkDataRing(BenchmarkDataLayer):
                 distIn += 0.5
                 distIn *= self.nodes_in.size
                 distIn += self.nodes_in[0]
-                
+
                 SpCellIn.append(distIn.astype(int))
-            
+
         else:
             SpCellEx = None
             SpCellIn = None
-        
+
         #broadcast the cell indexes to all ranks
         SpCellEx = COMM.bcast(SpCellEx, root=0)
         SpCellIn = COMM.bcast(SpCellIn, root=0)
-    
+
         return SpCellEx, SpCellIn
-    
