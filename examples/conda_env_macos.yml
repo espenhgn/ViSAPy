@@ -97,11 +97,8 @@ dependencies:
   - zlib=1.2.11=h7795811_1009
   - zstd=1.4.5=h289c70a_2
   - pip:
-    - connplotter==0.7a
     - numexpr==2.7.1
     - pywavelets==1.1.1
-    - spikesort==0.13
+    - -e git+https://github.com/espenhgn/SpikeSort.git@visapy#egg=SpikeSort
     - tables==3.6.1
-    - topology==2.16.0
-    - visapy==1.0
 prefix: /Users/ehagen/anaconda3/envs/nest216
